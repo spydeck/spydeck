@@ -28,8 +28,8 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
 
   if (isPending) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {Array.from({ length: 10 }).map((_, i) => (
           <Skeleton key={i} className="h-64 w-full rounded-xl" />
         ))}
       </div>
@@ -43,7 +43,7 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {posts.map((post) => {
         const author = getAuthor(post.authorId)
         const name = author?.name ?? "Unknown"
