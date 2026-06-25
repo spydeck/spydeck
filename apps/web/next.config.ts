@@ -10,6 +10,7 @@ const nextConfig = {
       { protocol: "https", hostname: "**.fbcdn.net" }, // Instagram/Facebook
       { protocol: "https", hostname: "**.tiktokcdn.com" }, // TikTok
       { protocol: "https", hostname: "**.tiktokcdn-us.com" }, // TikTok (US)
+      { protocol: "https", hostname: "**.tiktokcdn-eu.com" }, // TikTok (EU)
       { protocol: "https", hostname: "i.ytimg.com" }, // YouTube thumbnails
       { protocol: "https", hostname: "**.ggpht.com" }, // YouTube avatars/thumbnails
       { protocol: "https", hostname: "pbs.twimg.com" }, // Twitter/X media
