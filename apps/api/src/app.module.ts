@@ -8,6 +8,7 @@ import { ContentModule } from './content/content.module';
 import { SwipeModule } from './swipe/swipe.module';
 import { SettingsModule } from './settings/settings.module';
 import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module';
+import { ApifyModule } from './apify/apify.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module';
     SwipeModule,
     SettingsModule,
     ScrapeCreatorsModule,
+    ApifyModule,
   ],
   controllers: [AppController],
   providers: [AppService],
