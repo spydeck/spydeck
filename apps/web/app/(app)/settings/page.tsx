@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 
+import { useSettings, useSaveSettings } from "@/lib/settings"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -73,6 +74,9 @@ function SecretInput({
 }
 
 export default function SettingsPage() {
+  const { data: settings, isLoading } = useSettings()
+  const { mutate: saveSettings, isPending } = useSaveSettings()
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -82,10 +86,21 @@ export default function SettingsPage() {
     },
   })
 
+  useEffect(() => {
+    if (settings) {
+      form.reset({
+        scrapeCreatorsKey: settings.scrapeCreatorsKey ?? "",
+        apifyKey: settings.apifyKey ?? "",
+        resendKey: settings.resendKey ?? "",
+      })
+    }
+  }, [settings, form])
+
   function onSubmit(values: FormValues) {
-    // TODO: wire to backend
-    console.log("API keys to save:", values)
-    toast.success("Settings saved")
+    saveSettings(values, {
+      onSuccess: () => toast.success("Settings saved"),
+      onError: (err) => toast.error(`Failed to save settings: ${err.message}`),
+    })
   }
 
   return (
@@ -198,8 +213,8 @@ export default function SettingsPage() {
                   />
                 </CardContent>
                 <CardFooter>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    Save keys
+                  <Button type="submit" disabled={isPending || isLoading}>
+                    {isPending ? "Saving..." : "Save keys"}
                   </Button>
                 </CardFooter>
               </Card>

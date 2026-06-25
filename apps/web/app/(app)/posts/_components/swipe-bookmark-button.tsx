@@ -23,7 +23,7 @@ export function SwipeBookmarkButton({ postId }: SwipeBookmarkButtonProps) {
       disabled={isPending}
       onClick={(e) => {
         e.stopPropagation()
-        toggle(postId)
+        toggle({ postId, saved: isSaved })
       }}
       className="size-8"
     >
