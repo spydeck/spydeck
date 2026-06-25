@@ -2,11 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/api"
 
 export const PLATFORMS = [
-  { key: "instagram", label: "Instagram",   placeholder: "URL or @username" },
-  { key: "tiktok",   label: "TikTok",      placeholder: "URL or @username" },
-  { key: "youtube",  label: "YouTube",      placeholder: "URL or @channel"  },
-  { key: "x",        label: "X (Twitter)", placeholder: "URL or @username" },
-  { key: "facebook", label: "Facebook",    placeholder: "URL or page"   },
+  { key: "instagram", label: "Instagram",   placeholder: "@username" },
+  { key: "tiktok",   label: "TikTok",      placeholder: "@username" },
+  { key: "youtube",  label: "YouTube",      placeholder: "@channelname" },
+  { key: "x",        label: "X (Twitter)", placeholder: "@username" },
+  { key: "facebook", label: "Facebook",    placeholder: "username or page name" },
 ] as const
 
 export type PlatformKey = (typeof PLATFORMS)[number]["key"]
