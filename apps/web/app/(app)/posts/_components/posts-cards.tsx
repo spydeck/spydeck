@@ -5,6 +5,7 @@ import { Play, Heart, MessageCircle, Forward } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 import { useAuthors } from "@/lib/authors"
 import type { Post } from "@/lib/posts"
 import {
@@ -19,9 +20,10 @@ interface PostsCardsProps {
   posts: Post[]
   isPending: boolean
   renderAction?: (post: Post) => React.ReactNode
+  onSelectPost?: (post: Post) => void
 }
 
-export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) {
+export function PostsCards({ posts, isPending, renderAction, onSelectPost }: PostsCardsProps) {
   const { data: authors } = useAuthors()
 
   const getAuthor = (id: string) => authors?.find((a) => a.id === id)
@@ -61,7 +63,11 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
         const { views, likes, comments, shares } = post.engagement
 
         return (
-          <Card key={post.id} className="overflow-hidden border rounded-xl flex flex-col gap-0 py-0">
+          <Card
+            key={post.id}
+            className={cn("overflow-hidden border rounded-xl flex flex-col gap-0 py-0", onSelectPost && "cursor-pointer")}
+            onClick={onSelectPost ? () => onSelectPost(post) : undefined}
+          >
             {/* Header strip */}
             <div className="bg-muted/40 border-b px-3 py-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
@@ -84,6 +90,7 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative block w-full aspect-[4/3] bg-muted transition-opacity hover:opacity-95"
+                onClick={(e) => e.stopPropagation()}
               >
                 {post.mediaUrl.startsWith("data:") ? (
                   // Embedded base64 (e.g. transcoded TikTok HEIC covers) — render
@@ -138,7 +145,9 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
                 {formatCompact(shares ?? 0)}
               </span>
               {renderAction && (
-                <div className="ml-auto -my-1">{renderAction(post)}</div>
+                <div className="ml-auto -my-1" onClick={(e) => e.stopPropagation()}>
+                  {renderAction(post)}
+                </div>
               )}
             </div>
           </Card>

@@ -13,12 +13,15 @@ import {
 } from "@/components/ui/select"
 import { useAuthors } from "@/lib/authors"
 import { useSwipeFiles } from "@/lib/swipe-files"
+import type { Post } from "@/lib/posts"
 import { PostsTable } from "../posts/_components/posts-table"
 import { PostsCards } from "../posts/_components/posts-cards"
 import { SwipeBookmarkButton } from "../posts/_components/swipe-bookmark-button"
+import { PostDetailSidebar } from "@/components/post-detail-sidebar"
 
 export default function SwipeFilesPage() {
   const [authorFilter, setAuthorFilter] = useState<string>("all")
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const { data: authors } = useAuthors()
   const { data: posts, isPending: postsPending } = useSwipeFiles(
     authorFilter === "all" ? undefined : authorFilter
@@ -28,6 +31,7 @@ export default function SwipeFilesPage() {
 
   return (
     <>
+      <PostDetailSidebar post={selectedPost} onClose={() => setSelectedPost(null)} />
       <SiteHeader title="Swipe Files" />
       <div className="flex flex-1 flex-col gap-6 px-4 py-10">
         <div className="flex items-start justify-between gap-4">
@@ -71,6 +75,7 @@ export default function SwipeFilesPage() {
                 isPending={postsPending}
                 showAuthor={authorFilter === "all"}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
+                onSelectPost={setSelectedPost}
               />
             </TabsContent>
             <TabsContent value="cards" className="mt-4">
@@ -78,6 +83,7 @@ export default function SwipeFilesPage() {
                 posts={posts ?? []}
                 isPending={postsPending}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
+                onSelectPost={setSelectedPost}
               />
             </TabsContent>
           </Tabs>

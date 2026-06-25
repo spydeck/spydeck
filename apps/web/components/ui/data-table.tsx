@@ -26,6 +26,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   isLoading?: boolean
   emptyMessage?: React.ReactNode
+  onRowClick?: (row: TData) => void
 }
 
 export function DataTable<TData, TValue>({
@@ -33,6 +34,7 @@ export function DataTable<TData, TValue>({
   data,
   isLoading,
   emptyMessage = "No results.",
+  onRowClick,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
 
@@ -98,7 +100,11 @@ export function DataTable<TData, TValue>({
           </TableRow>
         ) : (
           table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+              className={onRowClick ? "cursor-pointer" : undefined}
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

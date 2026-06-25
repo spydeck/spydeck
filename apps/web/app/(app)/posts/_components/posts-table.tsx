@@ -16,9 +16,10 @@ interface PostsTableProps {
   isPending: boolean
   showAuthor: boolean
   renderAction?: (post: Post) => React.ReactNode
+  onSelectPost?: (post: Post) => void
 }
 
-export function PostsTable({ posts, isPending, showAuthor, renderAction }: PostsTableProps) {
+export function PostsTable({ posts, isPending, showAuthor, renderAction, onSelectPost }: PostsTableProps) {
   const { data: authors } = useAuthors()
 
   const authorName = (id: string) =>
@@ -124,6 +125,7 @@ export function PostsTable({ posts, isPending, showAuthor, renderAction }: Posts
       data={posts}
       isLoading={isPending}
       emptyMessage="No posts found."
+      onRowClick={onSelectPost}
     />
   )
 }
