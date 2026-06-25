@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/nav-main";
+import { NavUser } from "@/components/nav-user";
+import { SidebarCreditsBlock } from "@/components/sidebar-credits-block";
 import {
   Sidebar,
   SidebarContent,
@@ -12,25 +13,50 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
-import { BookmarkIcon, CommandIcon, LayoutDashboardIcon, NewspaperIcon, Settings2Icon, UsersRoundIcon } from "lucide-react"
-import Link from "next/link"
+} from "@/components/ui/sidebar";
+import {
+  BookmarkIcon,
+  LayoutDashboardIcon,
+  MegaphoneIcon,
+  NewspaperIcon,
+  SaveIcon,
+  Settings2Icon,
+  UsersRoundIcon,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-const navItems = [
-  { title: "Dashboard", url: "/", icon: <LayoutDashboardIcon /> },
-  { title: "Authors", url: "/authors", icon: <UsersRoundIcon /> },
-  { title: "Posts", url: "/posts", icon: <NewspaperIcon /> },
-  { title: "Swipe Files", url: "/swipe-files", icon: <BookmarkIcon /> },
-  { title: "Settings", url: "/settings", icon: <Settings2Icon /> },
-]
+const navGroups = [
+  {
+    label: "Overview",
+    items: [{ title: "Dashboard", url: "/", icon: <LayoutDashboardIcon /> }],
+  },
+  {
+    label: "Content",
+    items: [
+      { title: "Authors", url: "/authors", icon: <UsersRoundIcon /> },
+      { title: "Posts", url: "/posts", icon: <NewspaperIcon /> },
+      { title: "Swipe Files", url: "/swipe-files", icon: <BookmarkIcon /> },
+    ],
+  },
+  {
+    label: "Ads Library",
+    items: [
+      { title: "Search Ads", url: "/search-ads", icon: <MegaphoneIcon /> },
+      { title: "Swipe Ads", url: "/swipe-ads", icon: <SaveIcon /> },
+    ],
+  },
+];
 
 const user = {
   name: "shadcn",
   email: "m@example.com",
   avatar: "/avatars/shadcn.jpg",
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -41,7 +67,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link href="/">
-                <CommandIcon className="size-5!" />
+                <Image
+                  src="/logo.png"
+                  alt="Social Planner"
+                  width={24}
+                  height={24}
+                  className="size-6 rounded"
+                />
                 <span className="text-base font-semibold">Social Planner</span>
               </Link>
             </SidebarMenuButton>
@@ -49,11 +81,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        <NavMain groups={navGroups} />
       </SidebarContent>
+
       <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Settings"
+              isActive={pathname === "/settings"}
+            >
+              <Link href="/settings">
+                <Settings2Icon />
+                <span>Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <SidebarCreditsBlock />
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
