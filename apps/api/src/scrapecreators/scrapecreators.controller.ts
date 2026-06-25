@@ -6,14 +6,22 @@ export class ScrapeCreatorsController {
   constructor(private readonly account: ScrapeCreatorsAccountService) {}
 
   @Get('credit-balance')
-  creditBalance() { return this.account.creditBalance(); }
+  creditBalance() {
+    return this.account.creditBalance();
+  }
 
   @Get('request-history')
-  requestHistory() { return this.account.requestHistory(); }
+  requestHistory() {
+    return this.account.requestHistory();
+  }
 
   @Get('daily-usage')
-  dailyUsage() { return this.account.dailyUsage(); }
+  dailyUsage() {
+    return this.account.dailyUsage();
+  }
 
   @Get('most-used-routes')
-  mostUsedRoutes() { return this.account.mostUsedRoutes(); }
+  mostUsedRoutes() {
+    return this.account.mostUsedRoutes();
+  }
 }

@@ -19,7 +19,9 @@ export class ApifyService {
   constructor(private readonly client: ApifyClient) {}
 
   async getUsage(): Promise<ApifyUsage> {
-    const { data } = await this.client.request<ApifyLimitsResponse>('/v2/users/me/limits');
+    const { data } = await this.client.request<ApifyLimitsResponse>(
+      '/v2/users/me/limits',
+    );
     const used = data.current.monthlyUsageUsd;
     const limit = data.limits.maxMonthlyUsageUsd;
     return { used, limit, remaining: limit - used };

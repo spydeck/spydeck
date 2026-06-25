@@ -6,7 +6,9 @@ export class ScrapeCreatorsAccountService {
   constructor(private readonly client: ScrapeCreatorsClient) {}
 
   async creditBalance(): Promise<{ remaining: number }> {
-    const raw = await this.client.request<{ creditCount: number }>('/v1/account/credit-balance');
+    const raw = await this.client.request<{ creditCount: number }>(
+      '/v1/account/credit-balance',
+    );
     return { remaining: raw.creditCount };
   }
 

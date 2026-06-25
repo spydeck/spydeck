@@ -1,8 +1,16 @@
-import { IsString, IsOptional, IsBoolean, IsEnum, IsNumber, IsUrl } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+  IsNumber,
+  IsUrl,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 // Helper: coerce string 'true'/'false' from query string to boolean
-const toBool = () => Transform(({ value }) => value === 'true' || value === true);
+const toBool = () =>
+  Transform(({ value }) => value === 'true' || value === true);
 
 export class TikTokProfileDto {
   @IsOptional() @IsString() handle?: string;
@@ -31,8 +39,19 @@ export class TikTokTranscriptDto {
 
 export class TikTokSearchDto {
   @IsString() query!: string;
-  @IsOptional() @IsEnum(['yesterday', 'this-week', 'this-month', 'last-3-months', 'last-6-months', 'all-time']) date_posted?: string;
-  @IsOptional() @IsEnum(['relevance', 'most-liked', 'date-posted']) sort_by?: string;
+  @IsOptional()
+  @IsEnum([
+    'yesterday',
+    'this-week',
+    'this-month',
+    'last-3-months',
+    'last-6-months',
+    'all-time',
+  ])
+  date_posted?: string;
+  @IsOptional()
+  @IsEnum(['relevance', 'most-liked', 'date-posted'])
+  sort_by?: string;
   @IsOptional() @IsString() region?: string;
   @IsOptional() @IsNumber() cursor?: number;
 }

@@ -1,4 +1,12 @@
-import { Controller, Get, Put, Param, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Param,
+  Body,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { UpsertSettingDto } from './settings.dto';
 

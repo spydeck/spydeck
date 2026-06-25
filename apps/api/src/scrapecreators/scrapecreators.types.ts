@@ -29,7 +29,13 @@ export interface TikTokTranscriptParams {
 
 export interface TikTokSearchParams {
   query: string;
-  date_posted?: 'yesterday' | 'this-week' | 'this-month' | 'last-3-months' | 'last-6-months' | 'all-time';
+  date_posted?:
+    | 'yesterday'
+    | 'this-week'
+    | 'this-month'
+    | 'last-3-months'
+    | 'last-6-months'
+    | 'all-time';
   sort_by?: 'relevance' | 'most-liked' | 'date-posted';
   region?: string;
   cursor?: number;

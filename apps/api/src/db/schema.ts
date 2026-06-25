@@ -36,8 +36,12 @@ export const authors = pgTable('authors', {
   socials: jsonb('socials')
     .$type<Partial<Record<string, { value: string; synchronize: boolean }>>>()
     .default({}),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // Mirrors Post type: { id, authorId, platform, text, mediaUrl?, status, date, engagement }
@@ -55,8 +59,12 @@ export const posts = pgTable('posts', {
   engagement: jsonb('engagement')
     .$type<{ likes: number; comments: number; views: number; shares: number }>()
     .default({ likes: 0, comments: 0, views: 0, shares: 0 }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // ponytail: no userId — single implicit user; add userId FK when auth lands
@@ -66,7 +74,9 @@ export const swipeFiles = pgTable('swipe_files', {
     .notNull()
     .unique()
     .references(() => posts.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // ponytail: key/value is enough for now; typed settings table if values diverge
@@ -74,7 +84,9 @@ export const settings = pgTable('settings', {
   id: uuid('id').primaryKey().defaultRandom(),
   key: text('key').notNull().unique(),
   value: text('value').notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // Normalized ScrapeCreators profile data. One row per (author, platform).
@@ -112,8 +124,8 @@ export const authorsProfiles = pgTable(
 
     // ── TikTok-specific ───────────────────────────────────────────────────────
     // ponytail: nullable; NULL for non-TikTok rows
-    tiktokLikeCount: integer('tiktok_like_count'),   // stats.heart (total likes received)
-    tiktokVideoCount: integer('tiktok_video_count'),  // stats.videoCount
+    tiktokLikeCount: integer('tiktok_like_count'), // stats.heart (total likes received)
+    tiktokVideoCount: integer('tiktok_video_count'), // stats.videoCount
 
     // ── Instagram-specific ────────────────────────────────────────────────────
     igIsPrivate: boolean('ig_is_private'),
@@ -134,12 +146,19 @@ export const authorsProfiles = pgTable(
     // CDN-signed avatar URLs with expiry params, entity annotations, etc.).
     raw: jsonb('raw').$type<unknown>(),
 
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
   },
   (table) => [
     // One row per (author, platform); upsert target.
-    unique('authors_profiles_author_id_platform_unique').on(table.authorId, table.platform),
+    unique('authors_profiles_author_id_platform_unique').on(
+      table.authorId,
+      table.platform,
+    ),
   ],
 );
 
@@ -166,20 +185,26 @@ export const authorsRelations = relations(authors, ({ many }) => ({
   profiles: many(authorsProfiles),
 }));
 
-export const authorsProfilesRelations = relations(authorsProfiles, ({ one, many }) => ({
-  author: one(authors, {
-    fields: [authorsProfiles.authorId],
-    references: [authors.id],
+export const authorsProfilesRelations = relations(
+  authorsProfiles,
+  ({ one, many }) => ({
+    author: one(authors, {
+      fields: [authorsProfiles.authorId],
+      references: [authors.id],
+    }),
+    links: many(authorsProfileLinks),
   }),
-  links: many(authorsProfileLinks),
-}));
+);
 
-export const authorsProfileLinksRelations = relations(authorsProfileLinks, ({ one }) => ({
-  profile: one(authorsProfiles, {
-    fields: [authorsProfileLinks.profileId],
-    references: [authorsProfiles.id],
+export const authorsProfileLinksRelations = relations(
+  authorsProfileLinks,
+  ({ one }) => ({
+    profile: one(authorsProfiles, {
+      fields: [authorsProfileLinks.profileId],
+      references: [authorsProfiles.id],
+    }),
   }),
-}));
+);
 
 export type Author = typeof authors.$inferSelect;
 export type NewAuthor = typeof authors.$inferInsert;

@@ -8,7 +8,11 @@ import { ScrapeCreatorsAccountService } from './scrapecreators-account.service';
 @Module({
   imports: [SettingsModule],
   controllers: [ScrapeCreatorsController],
-  providers: [ScrapeCreatorsClient, ScrapeCreatorsService, ScrapeCreatorsAccountService],
+  providers: [
+    ScrapeCreatorsClient,
+    ScrapeCreatorsService,
+    ScrapeCreatorsAccountService,
+  ],
   exports: [ScrapeCreatorsService],
 })
 export class ScrapeCreatorsModule {}

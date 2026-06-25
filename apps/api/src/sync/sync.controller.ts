@@ -1,4 +1,13 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import { SyncService } from './sync.service';
 import { ExtractProfileDto } from './sync.dto';
 
@@ -17,6 +26,9 @@ export class SyncController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ExtractProfileDto,
   ) {
-    return this.syncService.enqueueProfileExtract({ authorId: id, platform: dto.platform });
+    return this.syncService.enqueueProfileExtract({
+      authorId: id,
+      platform: dto.platform,
+    });
   }
 }

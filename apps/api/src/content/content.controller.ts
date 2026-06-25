@@ -35,7 +35,10 @@ export class ContentController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateContentDto) {
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateContentDto,
+  ) {
     return this.contentService.update(id, dto);
   }
 
