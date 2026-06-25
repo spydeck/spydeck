@@ -33,6 +33,12 @@ export class SyncController {
     });
   }
 
+  @Post('authors/:id/sync-posts')
+  @HttpCode(HttpStatus.ACCEPTED)
+  syncPosts(@Param('id', ParseUUIDPipe) id: string) {
+    return this.syncService.enqueueSyncPosts({ authorId: id });
+  }
+
   @Put('authors/:id/sync-config')
   saveSyncConfigs(
     @Param('id', ParseUUIDPipe) id: string,

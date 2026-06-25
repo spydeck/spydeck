@@ -19,9 +19,10 @@ function makeDb(returnRow = { id: 'cfg-1' }) {
 }
 
 function build(db: any) {
-  // SyncService requires the BullMQ queue too; pass a minimal stub
+  // SyncService requires both BullMQ queues; pass minimal stubs
   const queue = { add: jest.fn() } as any;
-  return new SyncService(queue, db);
+  const syncPostsQueue = { add: jest.fn() } as any;
+  return new SyncService(queue, syncPostsQueue, db);
 }
 
 beforeAll(() => {
