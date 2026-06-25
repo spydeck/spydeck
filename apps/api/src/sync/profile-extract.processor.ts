@@ -12,6 +12,7 @@ import {
   type NewAuthorProfile,
   type NewAuthorProfileLink,
 } from '../db/schema';
+import { normalizeHandle, youtubeProfileParams } from './social-handle';
 
 // Platforms with a matching ScrapeCreators profile endpoint.
 // ponytail: facebook has no ScrapeCreators profile route; reject explicitly.
@@ -262,17 +263,23 @@ export class ProfileExtractProcessor extends WorkerHost {
 
   private async fetchProfile(
     platform: SupportedPlatform,
-    handle: string,
+    value: string,
   ): Promise<unknown> {
     switch (platform) {
       case 'instagram':
-        return this.scrapeCreators.instagramProfile({ handle });
+        return this.scrapeCreators.instagramProfile({
+          handle: normalizeHandle(value),
+        });
       case 'tiktok':
-        return this.scrapeCreators.tiktokProfile({ handle });
+        return this.scrapeCreators.tiktokProfile({
+          handle: normalizeHandle(value),
+        });
       case 'youtube':
-        return this.scrapeCreators.youtubeChannel({ handle });
+        return this.scrapeCreators.youtubeChannel(youtubeProfileParams(value));
       case 'x':
-        return this.scrapeCreators.twitterProfile({ handle });
+        return this.scrapeCreators.twitterProfile({
+          handle: normalizeHandle(value),
+        });
     }
   }
 }
