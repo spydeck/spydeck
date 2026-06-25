@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { Play, Heart, MessageCircle, Forward } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuthors } from "@/lib/authors"
@@ -61,23 +61,17 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
         const { views, likes, comments, shares } = post.engagement
 
         return (
-          <Card key={post.id} className="overflow-hidden border rounded-xl flex flex-col relative">
-            {/* Overlay action (e.g. bookmark) */}
-            {renderAction && (
-              <div className="absolute top-2 right-2 z-10">
-                {renderAction(post)}
-              </div>
-            )}
-
+          <Card key={post.id} className="overflow-hidden border rounded-xl flex flex-col">
             {/* Header strip */}
-            <div className="bg-muted/40 border-b px-3 py-2 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Avatar className="size-6">
+            <div className="bg-muted/40 border-b px-3 py-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <Avatar className="size-6 shrink-0">
+                  <AvatarImage src={author?.profiles?.find((p) => p.platform === post.platform)?.avatarUrl ?? undefined} />
                   <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium">{handle}</span>
+                <span className="text-sm font-medium truncate">{handle}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
                 <PlatformIcon platform={post.platform} className="size-4" />
                 <span className="text-sm">{typeLabel}</span>
               </div>
@@ -127,6 +121,9 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
                 <Forward className="size-3" />
                 {formatCompact(shares ?? 0)}
               </span>
+              {renderAction && (
+                <div className="ml-auto -my-1">{renderAction(post)}</div>
+              )}
             </div>
           </Card>
         )

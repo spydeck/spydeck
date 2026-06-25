@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Check, ChevronsUpDown, RefreshCw } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 import { SiteHeader } from "@/components/site-header"
@@ -17,12 +18,20 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useAuthors, useSyncPosts, SYNC_REFRESH_DELAY_MS } from "@/lib/authors"
+import { useAuthors, useSyncPosts, SYNC_REFRESH_DELAY_MS, type Author } from "@/lib/authors"
 import { usePosts } from "@/lib/posts"
 import { PostsTable } from "./_components/posts-table"
 import { PostsCards } from "./_components/posts-cards"
 import { SwipeBookmarkButton } from "./_components/swipe-bookmark-button"
 import { cn } from "@/lib/utils"
+
+function authorAvatar(author: Author): string | undefined {
+  return author.profiles.find((p) => p.avatarUrl != null)?.avatarUrl ?? undefined
+}
+
+function authorInitials(name: string): string {
+  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
+}
 
 export default function PostsPage() {
   const [authorFilter, setAuthorFilter] = useState<string>("all")
@@ -78,7 +87,18 @@ export default function PostsPage() {
                   aria-expanded={open}
                   className="w-48 justify-between"
                 >
-                  <span className="truncate">{selectedAuthorName}</span>
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    {authorFilter !== "all" && (() => {
+                      const a = authors?.find((x) => x.id === authorFilter)
+                      return a ? (
+                        <Avatar className="size-5 shrink-0">
+                          <AvatarImage src={authorAvatar(a)} />
+                          <AvatarFallback className="text-[9px]">{authorInitials(a.name)}</AvatarFallback>
+                        </Avatar>
+                      ) : null
+                    })()}
+                    <span className="truncate">{selectedAuthorName}</span>
+                  </span>
                   <ChevronsUpDown data-icon="inline-end" />
                 </Button>
               </PopoverTrigger>
@@ -118,6 +138,10 @@ export default function PostsPage() {
                               authorFilter === author.id ? "opacity-100" : "opacity-0"
                             )}
                           />
+                          <Avatar className="size-5 shrink-0 mr-1.5">
+                            <AvatarImage src={authorAvatar(author)} />
+                            <AvatarFallback className="text-[9px]">{authorInitials(author.name)}</AvatarFallback>
+                          </Avatar>
                           {author.name}
                         </CommandItem>
                       ))}
