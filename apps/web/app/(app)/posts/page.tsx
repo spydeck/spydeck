@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { Check, ChevronsUpDown, RefreshCw } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -18,8 +18,15 @@ import {
   CommandList,
 } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useAuthors, useSyncPosts, SYNC_REFRESH_DELAY_MS, type Author } from "@/lib/authors"
-import { usePosts } from "@/lib/posts"
+import { usePosts, type Post } from "@/lib/posts"
 import { PostsTable } from "./_components/posts-table"
 import { PostsCards } from "./_components/posts-cards"
 import { SwipeBookmarkButton } from "./_components/swipe-bookmark-button"
@@ -33,10 +40,40 @@ function authorInitials(name: string): string {
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
 }
 
+type SortKey =
+  | "date_desc"
+  | "date_asc"
+  | "likes_desc"
+  | "likes_asc"
+  | "comments_desc"
+  | "comments_asc"
+  | "eng_lc_desc"
+  | "eng_vli_desc"
+
+const SORT_OPTIONS: { value: SortKey; label: string }[] = [
+  { value: "date_desc", label: "Date published (newest)" },
+  { value: "date_asc", label: "Date published (oldest)" },
+  { value: "likes_desc", label: "Most likes" },
+  { value: "likes_asc", label: "Fewest likes" },
+  { value: "comments_desc", label: "Most comments" },
+  { value: "comments_asc", label: "Fewest comments" },
+  { value: "eng_lc_desc", label: "Engagement: likes ÷ comments" },
+  { value: "eng_vli_desc", label: "Engagement: views ÷ (likes + comments)" },
+]
+
+// ponytail: returns a numeric sort key; divide-by-zero returns 0 (sends those posts to the bottom on desc sorts)
+function engagementValue(post: Post, key: SortKey): number {
+  const { likes = 0, comments = 0, views = 0 } = post.engagement ?? {}
+  if (key === "eng_lc_desc") return comments > 0 ? likes / comments : 0
+  if (key === "eng_vli_desc") { const d = likes + comments; return d > 0 ? views / d : 0 }
+  return 0
+}
+
 export default function PostsPage() {
   const [authorFilter, setAuthorFilter] = useState<string>("all")
   const [open, setOpen] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [sortBy, setSortBy] = useState<SortKey>("date_desc")
 
   const { data: authors, isPending: authorsLoading } = useAuthors()
   const { data: posts, isPending: postsPending } = usePosts(
@@ -44,6 +81,23 @@ export default function PostsPage() {
   )
   const syncPosts = useSyncPosts()
   const queryClient = useQueryClient()
+
+  const sortedPosts = useMemo(() => {
+    const list = [...(posts ?? [])]
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case "date_desc": return new Date(b.date).getTime() - new Date(a.date).getTime()
+        case "date_asc":  return new Date(a.date).getTime() - new Date(b.date).getTime()
+        case "likes_desc": return (b.engagement?.likes ?? 0) - (a.engagement?.likes ?? 0)
+        case "likes_asc":  return (a.engagement?.likes ?? 0) - (b.engagement?.likes ?? 0)
+        case "comments_desc": return (b.engagement?.comments ?? 0) - (a.engagement?.comments ?? 0)
+        case "comments_asc":  return (a.engagement?.comments ?? 0) - (b.engagement?.comments ?? 0)
+        case "eng_lc_desc":  return engagementValue(b, sortBy) - engagementValue(a, sortBy)
+        case "eng_vli_desc": return engagementValue(b, sortBy) - engagementValue(a, sortBy)
+      }
+    })
+    return list
+  }, [posts, sortBy])
 
   const noAuthors = !authorsLoading && (!authors || authors.length === 0)
   const selectedAuthorName =
@@ -79,6 +133,18 @@ export default function PostsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
+              <SelectTrigger className="w-56">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -179,7 +245,7 @@ export default function PostsPage() {
             </TabsList>
             <TabsContent value="table" className="mt-4">
               <PostsTable
-                posts={posts ?? []}
+                posts={sortedPosts}
                 isPending={postsPending}
                 showAuthor={authorFilter === "all"}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
@@ -187,7 +253,7 @@ export default function PostsPage() {
             </TabsContent>
             <TabsContent value="cards" className="mt-4">
               <PostsCards
-                posts={posts ?? []}
+                posts={sortedPosts}
                 isPending={postsPending}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
               />
