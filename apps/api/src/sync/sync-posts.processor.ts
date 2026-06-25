@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { eq, count } from 'drizzle-orm';
+import sharp from 'sharp';
 import { AuthorsService } from '../authors/authors.service';
 import { ScrapeCreatorsService } from '../scrapecreators/scrapecreators.service';
 import { SyncService } from './sync.service';
@@ -151,6 +152,14 @@ function mapPosts(
   }
 }
 
+// ponytail: only HEIC is embedded to keep payload sizes manageable;
+// other formats stay as remote URLs. Move to object storage if rows grow too large.
+const MAX_HEIC_BYTES = 5 * 1024 * 1024; // 5 MB guard
+
+function isHeic(url: string): boolean {
+  return /\.hei[cf](\?|$)/i.test(url);
+}
+
 // ── Processor ────────────────────────────────────────────────────────────────
 
 @Injectable()
@@ -231,6 +240,21 @@ export class SyncPostsProcessor extends WorkerHost {
           continue;
         }
 
+        // Transcode HEIC covers to base64 JPEG so browsers can render them.
+        let heicEmbedded = 0;
+        for (const row of mapped) {
+          if (row.mediaUrl && isHeic(row.mediaUrl)) {
+            const embedded = await this.embedHeicCover(row.mediaUrl, platform);
+            if (embedded) {
+              row.mediaUrl = embedded;
+              heicEmbedded++;
+            }
+          }
+        }
+        if (heicEmbedded > 0) {
+          this.logger.log(`embedded ${heicEmbedded} HEIC cover(s) for ${platform} / author ${authorId}`);
+        }
+
         await this.db.insert(posts).values(mapped);
         this.logger.log(
           `inserted ${mapped.length} ${platform} post(s) for author ${authorId}`,
@@ -244,6 +268,28 @@ export class SyncPostsProcessor extends WorkerHost {
         (err as Error).stack,
       );
       throw err;
+    }
+  }
+
+  private async embedHeicCover(url: string, platform: string): Promise<string | null> {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const contentLength = Number(res.headers.get('content-length') ?? 0);
+      if (contentLength > MAX_HEIC_BYTES) {
+        this.logger.warn(`HEIC cover too large (${contentLength} bytes) for ${platform}: ${url}`);
+        return null;
+      }
+      const input = Buffer.from(await res.arrayBuffer());
+      if (input.byteLength > MAX_HEIC_BYTES) return null; // guard if header was absent
+      const jpeg = await sharp(input)
+        .resize({ width: 600, withoutEnlargement: true })
+        .jpeg({ quality: 72 })
+        .toBuffer();
+      return `data:image/jpeg;base64,${jpeg.toString('base64')}`;
+    } catch (err) {
+      this.logger.warn(`failed to transcode HEIC cover for ${platform}: ${url} — ${(err as Error).message}`);
+      return null;
     }
   }
 

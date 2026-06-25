@@ -6,6 +6,17 @@ import { AuthorsService } from '../authors/authors.service';
 import { ScrapeCreatorsService } from '../scrapecreators/scrapecreators.service';
 import { SyncService } from './sync.service';
 
+// Mock sharp so no native binary runs in tests.
+// The chain .resize().jpeg().toBuffer() resolves to a small JPEG-like buffer.
+jest.mock('sharp', () => {
+  const chain = {
+    resize: jest.fn().mockReturnThis(),
+    jpeg: jest.fn().mockReturnThis(),
+    toBuffer: jest.fn().mockResolvedValue(Buffer.from('fakejpeg')),
+  };
+  return jest.fn(() => chain);
+});
+
 type Social = { value: string; synchronize: boolean };
 
 /**
@@ -128,6 +139,14 @@ describe('SyncPostsProcessor', () => {
     } as any;
     authorsMock = { findOne: jest.fn() };
     syncMock = { getSyncConfig: jest.fn().mockResolvedValue(undefined) };
+
+    // Default fetch mock: returns a small response for HEIC cover downloads.
+    // Tests that don't involve HEIC won't call fetch, so this is harmless.
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: jest.fn().mockReturnValue('100') },
+      arrayBuffer: jest.fn().mockResolvedValue(new ArrayBuffer(4)),
+    } as any);
   });
 
   function build(db: any) {
@@ -275,5 +294,48 @@ describe('SyncPostsProcessor', () => {
     await expect(processor.process(jobFor({ authorId: 'author-1' }))).rejects.toThrow(
       'DB down',
     );
+  });
+
+  it('TikTok post with .heic mediaUrl → embedded as data:image/jpeg;base64,', async () => {
+    const { db, spies } = makeDb(0);
+    const heicResponse = {
+      aweme_list: [
+        {
+          desc: 'HEIC cover video',
+          create_time: 1700000000,
+          statistics: { digg_count: 1, comment_count: 1, play_count: 1, share_count: 0 },
+          video: { cover: { url_list: ['https://p16-cdn.tiktokcdn.com/cover.heic?sign=abc'] } },
+        },
+      ],
+    };
+    authorsMock.findOne.mockResolvedValue(
+      makeAuthor({ tiktok: { value: 'heicuser', synchronize: true } }),
+    );
+    scrape.tiktokProfileVideos.mockResolvedValue(heicResponse);
+
+    const processor = build(db);
+    await processor.process(jobFor({ authorId: 'author-1' }));
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://p16-cdn.tiktokcdn.com/cover.heic?sign=abc',
+    );
+    const rows = spies.insertValues.mock.calls[0][0];
+    expect(rows[0].mediaUrl).toMatch(/^data:image\/jpeg;base64,/);
+  });
+
+  it('non-HEIC mediaUrl (.jpg) is left as the remote URL without fetching', async () => {
+    const { db, spies } = makeDb(0);
+    authorsMock.findOne.mockResolvedValue(
+      makeAuthor({ tiktok: { value: 'jpguser', synchronize: true } }),
+    );
+    scrape.tiktokProfileVideos.mockResolvedValue(tiktokResponse); // covers are .jpg
+
+    const processor = build(db);
+    await processor.process(jobFor({ authorId: 'author-1' }));
+
+    // fetch should NOT have been called for non-HEIC covers
+    expect(global.fetch).not.toHaveBeenCalled();
+    const rows = spies.insertValues.mock.calls[0][0];
+    expect(rows[0].mediaUrl).toBe('https://cdn/cover1.jpg');
   });
 });
