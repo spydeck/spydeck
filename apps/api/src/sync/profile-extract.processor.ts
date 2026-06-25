@@ -86,6 +86,23 @@ export class ProfileExtractProcessor extends WorkerHost {
         raw,
       );
 
+      // Embed avatar as base64 data URI so it survives CDN hotlink blocks / signed-URL expiry.
+      if (profileData.avatarUrl?.startsWith('http')) {
+        const dataUri = await this.toAvatarDataUri(
+          profileData.avatarUrl,
+          chosen as SupportedPlatform,
+          handle,
+        );
+        if (dataUri) {
+          profileData.avatarUrl = dataUri;
+          this.logger.log(
+            `avatar embedded for ${chosen}/${handle} (${dataUri.length} chars)`,
+          );
+        }
+        // ponytail: store the data URI inline in avatarUrl; fine at current author counts.
+        // If authors grow large, move avatars to object storage and store a URL instead.
+      }
+
       // Upsert core profile row; cascade-delete on the profile will clean up old links.
       const [upserted] = await this.db
         .insert(authorsProfiles)
@@ -250,6 +267,30 @@ export class ProfileExtractProcessor extends WorkerHost {
           links: [],
         };
       }
+    }
+  }
+
+  private async toAvatarDataUri(
+    url: string,
+    platform: string,
+    handle: string,
+  ): Promise<string | null> {
+    try {
+      const MAX_BYTES = 2 * 1024 * 1024; // 2 MB guard
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const contentType = res.headers.get('content-type') ?? '';
+      if (!contentType.startsWith('image/')) return null;
+      const length = Number(res.headers.get('content-length') ?? 0);
+      if (length > MAX_BYTES) return null;
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > MAX_BYTES) return null;
+      return `data:${contentType};base64,${buf.toString('base64')}`;
+    } catch (err) {
+      this.logger.warn(
+        `avatar download failed for ${platform}/${handle}: ${(err as Error).message}`,
+      );
+      return null;
     }
   }
 

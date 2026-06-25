@@ -54,7 +54,24 @@ describe('ProfileExtractProcessor', () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
   });
 
+  // Default fetch mock: returns a small valid JPEG so avatar embedding succeeds.
+  const fakeImageBuf = Buffer.from('fakejpeg');
+  const mockFetchOk = () =>
+    jest.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: (h: string) =>
+          h === 'content-type' ? 'image/jpeg' : h === 'content-length' ? String(fakeImageBuf.length) : null,
+      },
+      arrayBuffer: () => Promise.resolve(fakeImageBuf.buffer),
+    });
+
+  let originalFetch: typeof global.fetch;
+
   beforeEach(() => {
+    originalFetch = global.fetch;
+    global.fetch = mockFetchOk() as any;
+
     authors = { findOne: jest.fn() };
     scrape = {
       tiktokProfile: jest.fn(),
@@ -62,6 +79,10 @@ describe('ProfileExtractProcessor', () => {
       youtubeChannel: jest.fn(),
       twitterProfile: jest.fn(),
     } as any;
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
   });
 
   function build(db: any) {
@@ -178,9 +199,10 @@ describe('ProfileExtractProcessor', () => {
     expect(v).toMatchObject({
       platformId: 'UC123',
       displayName: 'Jane Tube',
-      avatarUrl: 'https://yt/a.jpg',
       followerCount: 5000,
     });
+    // avatarUrl is now a data URI (embedded by toAvatarDataUri).
+    expect(v.avatarUrl).toMatch(/^data:image\/jpeg;base64,/);
     expect(spies.values.mock.calls[1][0]).toEqual([
       { profileId: 'profile-1', url: 'https://l1.com', title: null, sortOrder: 0 },
     ]);
@@ -249,6 +271,51 @@ describe('ProfileExtractProcessor', () => {
     await expect(
       build(db).process(jobFor({ authorId: 'author-1' })),
     ).rejects.toThrow(/Unsupported platform 'facebook'/);
+  });
+
+  it('embeds avatar as data URI when fetch returns an OK image', async () => {
+    authors.findOne.mockResolvedValue(
+      makeAuthor({ tiktok: { value: 'jane', synchronize: true } }),
+    );
+    scrape.tiktokProfile.mockResolvedValue({
+      user: {
+        id: '1',
+        nickname: 'Jane',
+        avatarLarger: 'https://cdn/avatar.jpg',
+      },
+      stats: {},
+    } as any);
+
+    const { db, spies } = makeDb();
+    await build(db).process(jobFor({ authorId: 'author-1', platform: 'tiktok' }));
+
+    const upsertValues = spies.values.mock.calls[0][0];
+    expect(upsertValues.avatarUrl).toMatch(/^data:image\/jpeg;base64,/);
+  });
+
+  it('keeps original avatarUrl (non-fatal) when avatar fetch fails', async () => {
+    authors.findOne.mockResolvedValue(
+      makeAuthor({ tiktok: { value: 'jane', synchronize: true } }),
+    );
+    scrape.tiktokProfile.mockResolvedValue({
+      user: {
+        id: '1',
+        nickname: 'Jane',
+        avatarLarger: 'https://cdn/avatar.jpg',
+      },
+      stats: {},
+    } as any);
+    global.fetch = jest.fn().mockResolvedValue({ ok: false }) as any;
+
+    const { db, spies } = makeDb();
+    // Job must complete without throwing.
+    await expect(
+      build(db).process(jobFor({ authorId: 'author-1', platform: 'tiktok' })),
+    ).resolves.toBeDefined();
+
+    // Falls back to original URL.
+    const upsertValues = spies.values.mock.calls[0][0];
+    expect(upsertValues.avatarUrl).toBe('https://cdn/avatar.jpg');
   });
 
   it('logs and rethrows when the ScrapeCreators fetch fails', async () => {
