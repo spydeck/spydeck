@@ -124,3 +124,10 @@ export function useExtractProfile() {
       }),
   })
 }
+
+export function useSyncPosts() {
+  return useMutation({
+    mutationFn: (id: string) =>
+      apiFetch<{ jobId: string }>(`/sync/authors/${id}/sync-posts`, { method: "POST" }),
+  })
+}
