@@ -1,29 +1,11 @@
 import {
   IsString,
-  IsNotEmpty,
   IsOptional,
   IsEnum,
   IsUUID,
-  IsObject,
   IsDateString,
   IsNumber,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-
-export class EngagementDto {
-  @IsNumber()
-  likes!: number;
-
-  @IsNumber()
-  comments!: number;
-
-  @IsNumber()
-  views!: number;
-
-  @IsNumber()
-  shares!: number;
-}
 
 export class CreateContentDto {
   @IsUUID()
@@ -54,9 +36,20 @@ export class CreateContentDto {
   date!: string;
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => EngagementDto)
-  engagement?: EngagementDto;
+  @IsNumber()
+  likes?: number;
+
+  @IsOptional()
+  @IsNumber()
+  views?: number;
+
+  @IsOptional()
+  @IsNumber()
+  shares?: number;
+
+  @IsOptional()
+  @IsNumber()
+  comments?: number;
 }
 
 export class UpdateContentDto {
@@ -93,7 +86,18 @@ export class UpdateContentDto {
   date?: string;
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => EngagementDto)
-  engagement?: EngagementDto;
+  @IsNumber()
+  likes?: number;
+
+  @IsOptional()
+  @IsNumber()
+  views?: number;
+
+  @IsOptional()
+  @IsNumber()
+  shares?: number;
+
+  @IsOptional()
+  @IsNumber()
+  comments?: number;
 }

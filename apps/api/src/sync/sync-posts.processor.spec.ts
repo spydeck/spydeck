@@ -193,7 +193,7 @@ describe('SyncPostsProcessor', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0].platform).toBe('tiktok');
     expect(rows[0].text).toBe('My first video');
-    expect(rows[0].engagement.likes).toBe(100);
+    expect(rows[0].likes).toBe(100);
     expect(rows[0].status).toBe('draft');
   });
 
@@ -248,7 +248,7 @@ describe('SyncPostsProcessor', () => {
     expect(rows[0].platform).toBe('instagram');
     expect(rows[0].text).toBe('IG caption');
     expect(rows[0].mediaUrl).toBe('https://cdn/ig.jpg');
-    expect(rows[0].engagement.likes).toBe(50);
+    expect(rows[0].likes).toBe(50);
   });
 
   it('maps youtube posts correctly', async () => {
@@ -267,7 +267,7 @@ describe('SyncPostsProcessor', () => {
     const rows = spies.insertValues.mock.calls[0][0];
     expect(rows[0].platform).toBe('youtube');
     expect(rows[0].text).toBe('My YT Video');
-    expect(rows[0].engagement.views).toBe(5000);
+    expect(rows[0].views).toBe(5000);
   });
 
   it('maps twitter posts correctly', async () => {
@@ -284,7 +284,7 @@ describe('SyncPostsProcessor', () => {
     const rows = spies.insertValues.mock.calls[0][0];
     expect(rows[0].platform).toBe('x');
     expect(rows[0].text).toBe('Hello twitter');
-    expect(rows[0].engagement.shares).toBe(7);
+    expect(rows[0].shares).toBe(7);
   });
 
   it('skips platforms with no handle value', async () => {

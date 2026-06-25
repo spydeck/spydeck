@@ -3,7 +3,7 @@
 import Image from "next/image"
 import React from "react"
 import { type ColumnDef } from "@tanstack/react-table"
-import { Heart, MessageCircle, Eye } from "lucide-react"
+import { Heart, MessageCircle, Eye, Forward } from "lucide-react"
 
 import { DataTable } from "@/components/ui/data-table"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -11,6 +11,19 @@ import { PLATFORMS, useAuthors } from "@/lib/authors"
 import type { Post } from "@/lib/posts"
 import { formatDate } from "./post-helpers"
 import { PlatformIcon } from "@/components/platform-icon"
+
+function MetricHeader({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <span className="flex items-center gap-1" title={label}>
+      {icon}
+      <span className="sr-only">{label}</span>
+    </span>
+  )
+}
+
+function MetricCell({ value }: { value: number }) {
+  return <span className="tabular-nums text-muted-foreground">{value.toLocaleString()}</span>
+}
 
 interface PostsTableProps {
   posts: Post[]
@@ -110,28 +123,24 @@ export function PostsTable({
       ),
     },
     {
-      id: "engagement",
-      header: "Engagement",
-      enableSorting: false,
-      cell: ({ row }) => {
-        const { likes, comments, views } = row.original.engagement
-        return (
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Heart className="size-3.5" />
-              {likes.toLocaleString()}
-            </span>
-            <span className="flex items-center gap-1">
-              <MessageCircle className="size-3.5" />
-              {comments.toLocaleString()}
-            </span>
-            <span className="flex items-center gap-1">
-              <Eye className="size-3.5" />
-              {views.toLocaleString()}
-            </span>
-          </div>
-        )
-      },
+      accessorKey: "likes",
+      header: () => <MetricHeader icon={<Heart className="size-3.5" />} label="Likes" />,
+      cell: ({ getValue }) => <MetricCell value={getValue<number>()} />,
+    },
+    {
+      accessorKey: "views",
+      header: () => <MetricHeader icon={<Eye className="size-3.5" />} label="Views" />,
+      cell: ({ getValue }) => <MetricCell value={getValue<number>()} />,
+    },
+    {
+      accessorKey: "comments",
+      header: () => <MetricHeader icon={<MessageCircle className="size-3.5" />} label="Comments" />,
+      cell: ({ getValue }) => <MetricCell value={getValue<number>()} />,
+    },
+    {
+      accessorKey: "shares",
+      header: () => <MetricHeader icon={<Forward className="size-3.5" />} label="Shares" />,
+      cell: ({ getValue }) => <MetricCell value={getValue<number>()} />,
     },
     {
       id: "thumbnail",

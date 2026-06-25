@@ -60,7 +60,7 @@ export function PostsCards({ posts, isPending, renderAction, onSelectPost }: Pos
         const dateShort = formatDateShort(post.date)
         const typeLabel = postTypeLabel(post.platform)
 
-        const { views, likes, comments, shares } = post.engagement
+        const { views, likes, comments, shares } = post
 
         return (
           <Card

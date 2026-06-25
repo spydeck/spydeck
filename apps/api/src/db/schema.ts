@@ -44,7 +44,7 @@ export const authors = pgTable('authors', {
     .notNull(),
 });
 
-// Mirrors Post type: { id, authorId, platform, text, mediaUrl?, videoUrl?, postUrl?, status, date, engagement }
+// Mirrors Post type: { id, authorId, platform, text, mediaUrl?, videoUrl?, postUrl?, status, date, likes, views, shares, comments }
 export const posts = pgTable('posts', {
   id: uuid('id').primaryKey().defaultRandom(),
   authorId: uuid('author_id')
@@ -57,10 +57,11 @@ export const posts = pgTable('posts', {
   postUrl: text('post_url'),
   status: postStatusEnum('status').notNull().default('draft'),
   date: timestamp('date', { withTimezone: true }).notNull(),
-  // ponytail: jsonb for engagement matches the web type without a separate table
-  engagement: jsonb('engagement')
-    .$type<{ likes: number; comments: number; views: number; shares: number }>()
-    .default({ likes: 0, comments: 0, views: 0, shares: 0 }),
+  // Engagement counts as first-class columns so they can be sorted/filtered in SQL.
+  likes: integer('likes').notNull().default(0),
+  views: integer('views').notNull().default(0),
+  shares: integer('shares').notNull().default(0),
+  comments: integer('comments').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
     .notNull(),

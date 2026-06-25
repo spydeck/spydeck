@@ -5,7 +5,6 @@ import type { PlatformKey } from "@/lib/authors"
 export type { PlatformKey }
 
 export type PostStatus = "draft" | "scheduled" | "published"
-export type PostEngagement = { likes: number; comments: number; views: number; shares: number }
 export type Post = {
   id: string
   authorId: string
@@ -16,7 +15,10 @@ export type Post = {
   postUrl?: string
   status: PostStatus
   date: string // ISO string
-  engagement: PostEngagement
+  likes: number
+  views: number
+  shares: number
+  comments: number
 }
 
 export function usePosts(authorId?: string) {

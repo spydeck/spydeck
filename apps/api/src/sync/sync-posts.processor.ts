@@ -36,12 +36,10 @@ type PostRow = {
   videoUrl: string | null;
   postUrl: string | null;
   date: Date;
-  engagement: {
-    likes: number;
-    comments: number;
-    views: number;
-    shares: number;
-  };
+  likes: number;
+  views: number;
+  shares: number;
+  comments: number;
   status: 'draft';
 };
 
@@ -71,12 +69,10 @@ function mapTiktokPosts(authorId: string, raw: unknown): PostRow[] {
       null,
     postUrl: (item?.share_url as string | undefined) ?? null,
     date: new Date((Number(item?.create_time) || 0) * 1000),
-    engagement: {
-      likes: Number(item?.statistics?.digg_count ?? 0),
-      comments: Number(item?.statistics?.comment_count ?? 0),
-      views: Number(item?.statistics?.play_count ?? 0),
-      shares: Number(item?.statistics?.share_count ?? 0),
-    },
+    likes: Number(item?.statistics?.digg_count ?? 0),
+    comments: Number(item?.statistics?.comment_count ?? 0),
+    views: Number(item?.statistics?.play_count ?? 0),
+    shares: Number(item?.statistics?.share_count ?? 0),
     status: 'draft' as const,
   }));
 }
@@ -103,12 +99,10 @@ function mapInstagramPosts(authorId: string, raw: unknown): PostRow[] {
         ? `https://www.instagram.com/p/${String(item.code)}/`
         : null,
       date: new Date((Number(item?.taken_at) || 0) * 1000),
-      engagement: {
-        likes: Number(item?.like_count ?? 0),
-        comments: Number(item?.comment_count ?? 0),
-        views: Number(item?.view_count ?? item?.play_count ?? 0),
-        shares: 0,
-      },
+      likes: Number(item?.like_count ?? 0),
+      comments: Number(item?.comment_count ?? 0),
+      views: Number(item?.view_count ?? item?.play_count ?? 0),
+      shares: 0,
       status: 'draft' as const,
     };
   });
@@ -135,12 +129,10 @@ function mapYoutubePosts(authorId: string, raw: unknown): PostRow[] {
       : item?.publishedTime
         ? new Date(item.publishedTime as string)
         : new Date(0),
-    engagement: {
-      likes: Number(item?.likeCountInt ?? 0),
-      comments: Number(item?.commentCountInt ?? 0),
-      views: Number(item?.viewCountInt ?? 0),
-      shares: 0,
-    },
+    likes: Number(item?.likeCountInt ?? 0),
+    comments: Number(item?.commentCountInt ?? 0),
+    views: Number(item?.viewCountInt ?? 0),
+    shares: 0,
     status: 'draft' as const,
   }));
 }
@@ -169,12 +161,10 @@ function mapTwitterPosts(authorId: string, raw: unknown): PostRow[] {
       date: legacy?.created_at
         ? new Date(legacy.created_at as string)
         : new Date(0),
-      engagement: {
-        likes: Number(legacy?.favorite_count ?? 0),
-        comments: Number(legacy?.reply_count ?? 0),
-        views: Number(tweet?.views?.count ?? 0),
-        shares: Number(legacy?.retweet_count ?? 0),
-      },
+      likes: Number(legacy?.favorite_count ?? 0),
+      comments: Number(legacy?.reply_count ?? 0),
+      views: Number(tweet?.views?.count ?? 0),
+      shares: Number(legacy?.retweet_count ?? 0),
       status: 'draft' as const,
     });
   }

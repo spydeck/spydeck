@@ -78,7 +78,7 @@ export function PostDetailSidebar({ post, onClose }: PostDetailSidebarProps) {
     post ? (PLATFORMS.find((p) => p.key === post.platform)?.label ?? post.platform) : ""
 
   const totalEngagement = post
-    ? post.engagement.likes + post.engagement.comments + post.engagement.shares
+    ? post.likes + post.comments + post.shares
     : 0
 
   return (
@@ -179,11 +179,11 @@ export function PostDetailSidebar({ post, onClose }: PostDetailSidebarProps) {
               {/* METRICS section */}
               <div>
                 <SectionLabel>Metrics</SectionLabel>
-                <Row label="Reactions" value={formatCompact(post.engagement.likes)} />
-                <Row label="Comments" value={formatCompact(post.engagement.comments)} />
-                <Row label="Shares" value={formatCompact(post.engagement.shares)} />
+                <Row label="Reactions" value={formatCompact(post.likes)} />
+                <Row label="Comments" value={formatCompact(post.comments)} />
+                <Row label="Shares" value={formatCompact(post.shares)} />
                 <Row label="Saves" value="—" /> {/* ponytail: not in data model */}
-                <Row label="Plays" value={formatCompact(post.engagement.views ?? 0)} />
+                <Row label="Plays" value={formatCompact(post.views ?? 0)} />
                 <Row label="Total engagement" value={formatCompact(totalEngagement)} />
                 <Row label="Engagement %" value="—" /> {/* ponytail: follower count not synced */}
                 <Row label="Published" value={formatDateShort(post.date)} />

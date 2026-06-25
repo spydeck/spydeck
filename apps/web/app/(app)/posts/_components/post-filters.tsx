@@ -58,7 +58,7 @@ export const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 
 // ponytail: divide-by-zero returns 0 (sends those posts to the bottom on desc sorts)
 function engagementValue(post: Post, key: SortKey): number {
-  const { likes = 0, comments = 0, views = 0 } = post.engagement ?? {}
+  const { likes = 0, comments = 0, views = 0 } = post
   if (key === "eng_lc_desc") return comments > 0 ? likes / comments : 0
   if (key === "eng_vli_desc") {
     const d = likes + comments
@@ -89,10 +89,10 @@ export function applyPostFilters(
     switch (sortBy) {
       case "date_desc": return new Date(b.date).getTime() - new Date(a.date).getTime()
       case "date_asc":  return new Date(a.date).getTime() - new Date(b.date).getTime()
-      case "likes_desc": return (b.engagement?.likes ?? 0) - (a.engagement?.likes ?? 0)
-      case "likes_asc":  return (a.engagement?.likes ?? 0) - (b.engagement?.likes ?? 0)
-      case "comments_desc": return (b.engagement?.comments ?? 0) - (a.engagement?.comments ?? 0)
-      case "comments_asc":  return (a.engagement?.comments ?? 0) - (b.engagement?.comments ?? 0)
+      case "likes_desc": return (b.likes ?? 0) - (a.likes ?? 0)
+      case "likes_asc":  return (a.likes ?? 0) - (b.likes ?? 0)
+      case "comments_desc": return (b.comments ?? 0) - (a.comments ?? 0)
+      case "comments_asc":  return (a.comments ?? 0) - (b.comments ?? 0)
       case "eng_lc_desc":
       case "eng_vli_desc": return engagementValue(b, sortBy) - engagementValue(a, sortBy)
     }
