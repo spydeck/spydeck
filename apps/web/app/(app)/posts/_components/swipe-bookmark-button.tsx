@@ -25,7 +25,7 @@ export function SwipeBookmarkButton({ postId }: SwipeBookmarkButtonProps) {
         e.stopPropagation()
         toggle({ postId, saved: isSaved })
       }}
-      className="size-8"
+      className="size-8 rounded-full border border-red-500/40"
     >
       <Bookmark
         className={cn("size-4 text-red-500", isSaved && "fill-current")}

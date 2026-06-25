@@ -128,15 +128,15 @@ export function PostsCards({ posts, isPending, renderAction, onSelectPost }: Pos
 
             {/* Footer */}
             <div className="flex items-center gap-4 px-3 pb-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-sky-500">
                 <Play className="size-3" />
                 {formatCompact(views ?? 0)}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-rose-500">
                 <Heart className="size-3" />
                 {formatCompact(likes ?? 0)}
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-emerald-500">
                 <MessageCircle className="size-3" />
                 {formatCompact(comments ?? 0)}
               </span>
