@@ -5,6 +5,13 @@ import type { DrizzleDB } from '../db/database.module';
 import { authors } from '../db/schema';
 import { CreateAuthorDto, UpdateAuthorDto } from './authors.dto';
 
+// ponytail: exclude raw/internal id columns; frontend indexes by platform
+const profileColumns = {
+  raw: false,
+  id: false,
+  authorId: false,
+} as const;
+
 @Injectable()
 export class AuthorsService {
   private readonly logger = new Logger(AuthorsService.name);
@@ -12,14 +19,16 @@ export class AuthorsService {
   constructor(@Inject(DB) private readonly db: DrizzleDB) {}
 
   findAll() {
-    return this.db.select().from(authors);
+    return this.db.query.authors.findMany({
+      with: { profiles: { columns: profileColumns } },
+    });
   }
 
   async findOne(id: string) {
-    const [row] = await this.db
-      .select()
-      .from(authors)
-      .where(eq(authors.id, id));
+    const row = await this.db.query.authors.findFirst({
+      where: eq(authors.id, id),
+      with: { profiles: { columns: profileColumns } },
+    });
     if (!row) throw new NotFoundException(`Author ${id} not found`);
     return row;
   }
