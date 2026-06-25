@@ -34,48 +34,47 @@ type PostRow = {
 // ── Per-platform raw response mappers ────────────────────────────────────────
 
 // TikTok /v3/tiktok/profile/videos
-// Response: { itemList: Array<{ desc, createTime, stats: { diggCount, commentCount, playCount, shareCount }, video: { cover } }> }
+// Response: { aweme_list: Array<{ desc, create_time, statistics: { digg_count, comment_count, play_count, share_count }, video: { cover: { url_list: string[] } } }> }
 function mapTiktokPosts(authorId: string, raw: unknown): PostRow[] {
-  const list = ((raw as any)?.itemList ?? []) as any[];
+  const list = ((raw as any)?.aweme_list ?? []) as any[];
   return list.map((item) => ({
     authorId,
     platform: 'tiktok' as const,
     text: String(item?.desc ?? ''),
-    mediaUrl: (item?.video?.cover as string | undefined) ?? null,
-    date: new Date((Number(item?.createTime) || 0) * 1000),
+    mediaUrl: (item?.video?.cover?.url_list?.[0] as string | undefined) ?? null,
+    date: new Date((Number(item?.create_time) || 0) * 1000),
     engagement: {
-      likes: Number(item?.stats?.diggCount ?? 0),
-      comments: Number(item?.stats?.commentCount ?? 0),
-      views: Number(item?.stats?.playCount ?? 0),
-      shares: Number(item?.stats?.shareCount ?? 0),
+      likes: Number(item?.statistics?.digg_count ?? 0),
+      comments: Number(item?.statistics?.comment_count ?? 0),
+      views: Number(item?.statistics?.play_count ?? 0),
+      shares: Number(item?.statistics?.share_count ?? 0),
     },
     status: 'draft' as const,
   }));
 }
 
 // Instagram /v2/instagram/user/posts
-// Response: { data: { user: { edge_owner_to_timeline_media: { edges: Array<{ node: { edge_media_to_caption: { edges: [{node: {text}}] }, taken_at_timestamp, thumbnail_src, edge_liked_by: {count}, edge_media_to_comment: {count}, video_view_count } }> } } } }
+// Response: { items: Array<{ caption: { text } | null, taken_at, image_versions2: { candidates: [{ url }] }, display_uri, like_count, comment_count }> }
 function mapInstagramPosts(authorId: string, raw: unknown): PostRow[] {
-  const edges =
-    ((raw as any)?.data?.user?.edge_owner_to_timeline_media?.edges as any[]) ??
-    [];
-  return edges.map((e) => {
-    const node = e?.node ?? {};
+  const items = ((raw as any)?.items as any[]) ?? [];
+  return items.map((item) => {
     const caption: string =
-      node?.edge_media_to_caption?.edges?.[0]?.node?.text ?? '';
+      typeof item?.caption === 'object' && item?.caption !== null
+        ? (item.caption.text ?? '')
+        : '';
     return {
       authorId,
       platform: 'instagram' as const,
       text: String(caption),
       mediaUrl:
-        (node?.thumbnail_src as string | undefined) ??
-        (node?.display_url as string | undefined) ??
+        (item?.image_versions2?.candidates?.[0]?.url as string | undefined) ??
+        (item?.display_uri as string | undefined) ??
         null,
-      date: new Date((Number(node?.taken_at_timestamp) || 0) * 1000),
+      date: new Date((Number(item?.taken_at) || 0) * 1000),
       engagement: {
-        likes: Number(node?.edge_liked_by?.count ?? 0),
-        comments: Number(node?.edge_media_to_comment?.count ?? 0),
-        views: Number(node?.video_view_count ?? 0),
+        likes: Number(item?.like_count ?? 0),
+        comments: Number(item?.comment_count ?? 0),
+        views: Number(item?.view_count ?? item?.play_count ?? 0),
         shares: 0,
       },
       status: 'draft' as const,
@@ -84,47 +83,36 @@ function mapInstagramPosts(authorId: string, raw: unknown): PostRow[] {
 }
 
 // YouTube /v1/youtube/channel-videos
-// Response: { items: Array<{ snippet: { title, description, publishedAt, thumbnails: { default: { url } } }, statistics: { viewCount, likeCount, commentCount } }> }
+// Response: { videos: Array<{ title, thumbnail, publishDate, publishedTime, viewCountInt, likeCountInt, commentCountInt }> }
 function mapYoutubePosts(authorId: string, raw: unknown): PostRow[] {
-  const items = ((raw as any)?.items ?? []) as any[];
-  return items.map((item) => {
-    const snippet = item?.snippet ?? {};
-    const stats = item?.statistics ?? {};
-    return {
-      authorId,
-      platform: 'youtube' as const,
-      text: String(snippet?.title ?? snippet?.description ?? ''),
-      mediaUrl:
-        (snippet?.thumbnails?.maxres?.url as string | undefined) ??
-        (snippet?.thumbnails?.high?.url as string | undefined) ??
-        (snippet?.thumbnails?.default?.url as string | undefined) ??
-        null,
-      date: snippet?.publishedAt
-        ? new Date(snippet.publishedAt as string)
+  const items = ((raw as any)?.videos ?? []) as any[];
+  return items.map((item) => ({
+    authorId,
+    platform: 'youtube' as const,
+    text: String(item?.title ?? ''),
+    mediaUrl: (item?.thumbnail as string | undefined) ?? null,
+    date: item?.publishDate
+      ? new Date(item.publishDate as string)
+      : item?.publishedTime
+        ? new Date(item.publishedTime as string)
         : new Date(0),
-      engagement: {
-        likes: Number(stats?.likeCount ?? 0),
-        comments: Number(stats?.commentCount ?? 0),
-        views: Number(stats?.viewCount ?? 0),
-        shares: 0,
-      },
-      status: 'draft' as const,
-    };
-  });
+    engagement: {
+      likes: Number(item?.likeCountInt ?? 0),
+      comments: Number(item?.commentCountInt ?? 0),
+      views: Number(item?.viewCountInt ?? 0),
+      shares: 0,
+    },
+    status: 'draft' as const,
+  }));
 }
 
 // Twitter/X /v1/twitter/user-tweets
-// Response: { data: { timeline_v2: { timeline: { instructions: Array<{ entries: Array<{ content: { itemContent: { tweet_results: { result: { legacy: { full_text, created_at, favorite_count, reply_count, retweet_count, views: { count } } } } } }> }> } } } }
+// Response: { tweets: Array<{ legacy: { full_text, created_at, favorite_count, reply_count, retweet_count, entities: { media } }, views: { count } }> }
 function mapTwitterPosts(authorId: string, raw: unknown): PostRow[] {
-  const instructions: any[] =
-    (raw as any)?.data?.timeline_v2?.timeline?.instructions ?? [];
-  const entries: any[] = instructions.flatMap((i: any) => i?.entries ?? []);
+  const tweets: any[] = (raw as any)?.tweets ?? [];
   const rows: PostRow[] = [];
-  for (const entry of entries) {
-    const result =
-      entry?.content?.itemContent?.tweet_results?.result;
-    if (!result) continue;
-    const legacy = result?.legacy ?? result?.tweet?.legacy ?? {};
+  for (const tweet of tweets) {
+    const legacy = tweet?.legacy ?? {};
     if (!legacy?.full_text) continue;
     rows.push({
       authorId,
@@ -137,7 +125,7 @@ function mapTwitterPosts(authorId: string, raw: unknown): PostRow[] {
       engagement: {
         likes: Number(legacy?.favorite_count ?? 0),
         comments: Number(legacy?.reply_count ?? 0),
-        views: Number(result?.views?.count ?? legacy?.views?.count ?? 0),
+        views: Number(tweet?.views?.count ?? 0),
         shares: Number(legacy?.retweet_count ?? 0),
       },
       status: 'draft' as const,

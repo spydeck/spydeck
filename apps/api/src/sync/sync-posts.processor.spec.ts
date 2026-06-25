@@ -37,92 +37,67 @@ function jobFor(data: SyncPostsPayload): Job<SyncPostsPayload> {
   return { id: 'job-1', data } as unknown as Job<SyncPostsPayload>;
 }
 
-// Minimal TikTok response with two items
+// Minimal TikTok response — real shape: aweme_list, statistics.digg_count, video.cover.url_list
 const tiktokResponse = {
-  itemList: [
+  aweme_list: [
     {
       desc: 'My first video',
-      createTime: 1700000000,
-      stats: { diggCount: 100, commentCount: 10, playCount: 1000, shareCount: 5 },
-      video: { cover: 'https://cdn/cover1.jpg' },
+      create_time: 1700000000,
+      statistics: { digg_count: 100, comment_count: 10, play_count: 1000, share_count: 5 },
+      video: { cover: { url_list: ['https://cdn/cover1.jpg'] } },
     },
     {
       desc: 'My second video',
-      createTime: 1700100000,
-      stats: { diggCount: 200, commentCount: 20, playCount: 2000, shareCount: 10 },
-      video: { cover: 'https://cdn/cover2.jpg' },
+      create_time: 1700100000,
+      statistics: { digg_count: 200, comment_count: 20, play_count: 2000, share_count: 10 },
+      video: { cover: { url_list: ['https://cdn/cover2.jpg'] } },
     },
   ],
 };
 
-// Minimal Instagram response
+// Minimal Instagram response — real shape: items[], caption.text, taken_at, image_versions2.candidates[0].url
 const instagramResponse = {
-  data: {
-    user: {
-      edge_owner_to_timeline_media: {
-        edges: [
-          {
-            node: {
-              edge_media_to_caption: { edges: [{ node: { text: 'IG caption' } }] },
-              taken_at_timestamp: 1700000000,
-              thumbnail_src: 'https://cdn/ig.jpg',
-              edge_liked_by: { count: 50 },
-              edge_media_to_comment: { count: 5 },
-              video_view_count: 0,
-            },
-          },
-        ],
-      },
-    },
-  },
-};
-
-// Minimal YouTube response
-const youtubeResponse = {
   items: [
     {
-      snippet: {
-        title: 'My YT Video',
-        publishedAt: '2023-11-15T00:00:00Z',
-        thumbnails: { default: { url: 'https://cdn/yt.jpg' } },
-      },
-      statistics: { viewCount: '5000', likeCount: '300', commentCount: '25' },
+      caption: { text: 'IG caption' },
+      taken_at: 1700000000,
+      image_versions2: { candidates: [{ url: 'https://cdn/ig.jpg' }] },
+      like_count: 50,
+      comment_count: 5,
+      view_count: null,
+      play_count: null,
     },
   ],
 };
 
-// Minimal Twitter response
-const twitterResponse = {
-  data: {
-    timeline_v2: {
-      timeline: {
-        instructions: [
-          {
-            entries: [
-              {
-                content: {
-                  itemContent: {
-                    tweet_results: {
-                      result: {
-                        legacy: {
-                          full_text: 'Hello twitter',
-                          created_at: 'Wed Nov 15 00:00:00 +0000 2023',
-                          favorite_count: 42,
-                          reply_count: 3,
-                          retweet_count: 7,
-                        },
-                        views: { count: '1000' },
-                      },
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        ],
-      },
+// Minimal YouTube response — real shape: videos[], title, thumbnail, publishDate, viewCountInt/likeCountInt/commentCountInt
+const youtubeResponse = {
+  videos: [
+    {
+      title: 'My YT Video',
+      thumbnail: 'https://cdn/yt.jpg',
+      publishDate: '2023-11-15T00:00:00Z',
+      viewCountInt: 5000,
+      likeCountInt: 300,
+      commentCountInt: 25,
     },
-  },
+  ],
+};
+
+// Minimal Twitter response — real shape: tweets[], legacy.full_text/created_at/counts, views.count
+const twitterResponse = {
+  tweets: [
+    {
+      legacy: {
+        full_text: 'Hello twitter',
+        created_at: 'Wed Nov 15 00:00:00 +0000 2023',
+        favorite_count: 42,
+        reply_count: 3,
+        retweet_count: 7,
+      },
+      views: { count: '1000' },
+    },
+  ],
 };
 
 describe('SyncPostsProcessor', () => {
