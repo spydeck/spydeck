@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { type ColumnDef } from "@tanstack/react-table"
-import { Pencil, Trash2 } from "lucide-react"
+import { BadgeCheck, Pencil, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { useQueryClient } from "@tanstack/react-query"
 
-import { BadgeCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DataTable } from "@/components/ui/data-table"
@@ -19,9 +19,64 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { PLATFORMS, useAuthors, useDeleteAuthor, type Author, type AuthorProfile } from "@/lib/authors"
+import {
+  PLATFORMS,
+  SYNC_REFRESH_DELAY_MS,
+  useAuthors,
+  useDeleteAuthor,
+  useExtractProfile,
+  type Author,
+  type AuthorProfile,
+  type PlatformKey,
+} from "@/lib/authors"
 import { PlatformIcon } from "@/components/platform-icon"
 import { AddAuthorDialog } from "./add-author-dialog"
+
+const EXTRACTABLE: ReadonlySet<PlatformKey> = new Set(["instagram", "tiktok", "youtube", "x"])
+
+function SyncButton({ author }: { author: Author }) {
+  const [syncing, setSyncing] = useState(false)
+  const { mutate } = useExtractProfile()
+  const queryClient = useQueryClient()
+
+  function handleSync() {
+    const platforms = (Object.entries(author.socials) as [PlatformKey, { value: string }][])
+      .filter(([p, s]) => EXTRACTABLE.has(p) && !!s.value)
+      .map(([p]) => p)
+
+    if (platforms.length === 0) {
+      toast.error("No profiles to sync")
+      return
+    }
+
+    toast.info("Syncing profiles…")
+    setSyncing(true)
+
+    for (const platform of platforms) {
+      mutate({ id: author.id, platform })
+    }
+
+    // ponytail: spinner reset is timed, not tied to real job completion —
+    // extraction is async/queued with no per-job callback available here
+    setTimeout(() => {
+      setSyncing(false)
+      queryClient.invalidateQueries({ queryKey: ["authors"] })
+    }, SYNC_REFRESH_DELAY_MS)
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      aria-label={`Sync ${author.name}`}
+      title="Sync profiles"
+      disabled={syncing}
+      onClick={handleSync}
+    >
+      <RefreshCw className={syncing ? "animate-spin" : undefined} />
+    </Button>
+  )
+}
 
 function profileFor(author: Author, platform: string): AuthorProfile | undefined {
   return author.profiles?.find((p) => p.platform === platform)
@@ -66,18 +121,22 @@ function getAuthorColumns({
           const fallback = (label ?? "?")[0]!.toUpperCase()
           const count = formatCount(profile.followerCount)
           return (
-            <div className="flex items-center gap-1.5">
-              <Avatar className="size-6 shrink-0">
+            <div className="flex items-center gap-2">
+              <Avatar className="size-7 shrink-0">
                 <AvatarImage src={profile.avatarUrl ?? undefined} alt={label ?? undefined} />
                 <AvatarFallback className="text-[10px]">{fallback}</AvatarFallback>
               </Avatar>
-              <span className="truncate text-sm">{label}</span>
-              {profile.verified && (
-                <BadgeCheck className="size-3.5 shrink-0 text-blue-500" aria-label="Verified" />
-              )}
-              {count && (
-                <span className="ml-auto shrink-0 text-xs text-muted-foreground">{count}</span>
-              )}
+              <div className="flex min-w-0 flex-col leading-tight">
+                <span className="flex items-center gap-1 text-sm font-medium">
+                  <span className="truncate">{label}</span>
+                  {profile.verified && (
+                    <BadgeCheck className="size-3.5 shrink-0 text-blue-500" aria-label="Verified" />
+                  )}
+                </span>
+                {count && (
+                  <span className="text-xs text-muted-foreground">{count} followers</span>
+                )}
+              </div>
             </div>
           )
         },
@@ -91,6 +150,7 @@ function getAuthorColumns({
         const author = row.original
         return (
           <div className="flex justify-end gap-1">
+            <SyncButton author={author} />
             <Button
               variant="ghost"
               size="icon"
