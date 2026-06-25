@@ -7,6 +7,7 @@ import { AuthorsModule } from './authors/authors.module';
 import { ContentModule } from './content/content.module';
 import { SwipeModule } from './swipe/swipe.module';
 import { SettingsModule } from './settings/settings.module';
+import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SettingsModule } from './settings/settings.module';
     ContentModule,
     SwipeModule,
     SettingsModule,
+    ScrapeCreatorsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
