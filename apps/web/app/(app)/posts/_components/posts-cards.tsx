@@ -18,9 +18,10 @@ import { PlatformIcon } from "./platform-icon"
 interface PostsCardsProps {
   posts: Post[]
   isPending: boolean
+  renderAction?: (post: Post) => React.ReactNode
 }
 
-export function PostsCards({ posts, isPending }: PostsCardsProps) {
+export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) {
   const { data: authors } = useAuthors()
 
   const getAuthor = (id: string) => authors?.find((a) => a.id === id)
@@ -60,7 +61,14 @@ export function PostsCards({ posts, isPending }: PostsCardsProps) {
         const { views, likes, comments, shares } = post.engagement
 
         return (
-          <Card key={post.id} className="overflow-hidden border rounded-xl flex flex-col">
+          <Card key={post.id} className="overflow-hidden border rounded-xl flex flex-col relative">
+            {/* Overlay action (e.g. bookmark) */}
+            {renderAction && (
+              <div className="absolute top-2 right-2 z-10">
+                {renderAction(post)}
+              </div>
+            )}
+
             {/* Header strip */}
             <div className="bg-muted/40 border-b px-3 py-2 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
