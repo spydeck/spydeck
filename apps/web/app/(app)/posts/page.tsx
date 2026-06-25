@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, Fragment } from "react"
 import Link from "next/link"
 import { Check, ChevronsUpDown, RefreshCw } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -188,9 +188,8 @@ export default function PostsPage() {
                         All authors
                       </CommandItem>
                       {authors?.map((author) => (
-                        <>
+                        <Fragment key={author.id}>
                           <CommandItem
-                            key={author.id}
                             value={`${author.name} ${author.profiles.map((p) => p.platform).join(" ")}`}
                             onSelect={() => { setAuthorFilter(author.id); setOpen(false) }}
                           >
@@ -215,7 +214,7 @@ export default function PostsPage() {
                               </span>
                             </CommandItem>
                           ))}
-                        </>
+                        </Fragment>
                       ))}
                     </CommandGroup>
                   </CommandList>
