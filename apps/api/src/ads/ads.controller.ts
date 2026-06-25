@@ -1,4 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { AdsService } from './ads.service';
 import {
   GoogleAdvertisersDto,
@@ -9,6 +10,7 @@ import {
 } from './ads.dto';
 
 @Controller('ads')
+@UseInterceptors(CacheInterceptor)
 export class AdsController {
   constructor(private readonly adsService: AdsService) {}
 
