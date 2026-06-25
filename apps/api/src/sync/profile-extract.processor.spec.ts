@@ -61,7 +61,11 @@ describe('ProfileExtractProcessor', () => {
       ok: true,
       headers: {
         get: (h: string) =>
-          h === 'content-type' ? 'image/jpeg' : h === 'content-length' ? String(fakeImageBuf.length) : null,
+          h === 'content-type'
+            ? 'image/jpeg'
+            : h === 'content-length'
+              ? String(fakeImageBuf.length)
+              : null,
       },
       arrayBuffer: () => Promise.resolve(fakeImageBuf.buffer),
     });
@@ -169,7 +173,12 @@ describe('ProfileExtractProcessor', () => {
     expect(spies.del).toHaveBeenCalledTimes(1);
     const linkRows = spies.values.mock.calls[1][0];
     expect(linkRows).toEqual([
-      { profileId: 'profile-1', url: 'https://a.com', title: 'A', sortOrder: 0 },
+      {
+        profileId: 'profile-1',
+        url: 'https://a.com',
+        title: 'A',
+        sortOrder: 0,
+      },
       {
         profileId: 'profile-1',
         url: 'https://b.com',
@@ -193,7 +202,9 @@ describe('ProfileExtractProcessor', () => {
     } as any);
 
     const { db, spies } = makeDb();
-    await build(db).process(jobFor({ authorId: 'author-1', platform: 'youtube' }));
+    await build(db).process(
+      jobFor({ authorId: 'author-1', platform: 'youtube' }),
+    );
 
     const v = spies.values.mock.calls[0][0];
     expect(v).toMatchObject({
@@ -204,7 +215,12 @@ describe('ProfileExtractProcessor', () => {
     // avatarUrl is now a data URI (embedded by toAvatarDataUri).
     expect(v.avatarUrl).toMatch(/^data:image\/jpeg;base64,/);
     expect(spies.values.mock.calls[1][0]).toEqual([
-      { profileId: 'profile-1', url: 'https://l1.com', title: null, sortOrder: 0 },
+      {
+        profileId: 'profile-1',
+        url: 'https://l1.com',
+        title: null,
+        sortOrder: 0,
+      },
     ]);
   });
 
@@ -287,7 +303,9 @@ describe('ProfileExtractProcessor', () => {
     } as any);
 
     const { db, spies } = makeDb();
-    await build(db).process(jobFor({ authorId: 'author-1', platform: 'tiktok' }));
+    await build(db).process(
+      jobFor({ authorId: 'author-1', platform: 'tiktok' }),
+    );
 
     const upsertValues = spies.values.mock.calls[0][0];
     expect(upsertValues.avatarUrl).toMatch(/^data:image\/jpeg;base64,/);

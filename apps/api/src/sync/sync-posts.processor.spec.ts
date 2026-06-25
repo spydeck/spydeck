@@ -60,13 +60,23 @@ const tiktokResponse = {
     {
       desc: 'My first video',
       create_time: 1700000000,
-      statistics: { digg_count: 100, comment_count: 10, play_count: 1000, share_count: 5 },
+      statistics: {
+        digg_count: 100,
+        comment_count: 10,
+        play_count: 1000,
+        share_count: 5,
+      },
       video: { cover: { url_list: ['https://cdn/cover1.jpg'] } },
     },
     {
       desc: 'My second video',
       create_time: 1700100000,
-      statistics: { digg_count: 200, comment_count: 20, play_count: 2000, share_count: 10 },
+      statistics: {
+        digg_count: 200,
+        comment_count: 20,
+        play_count: 2000,
+        share_count: 10,
+      },
       video: { cover: { url_list: ['https://cdn/cover2.jpg'] } },
     },
   ],
@@ -174,7 +184,9 @@ describe('SyncPostsProcessor', () => {
     const processor = build(db);
     await processor.process(jobFor({ authorId: 'author-1' }));
 
-    expect(scrape.tiktokProfileVideos).toHaveBeenCalledWith({ handle: 'janedoe' });
+    expect(scrape.tiktokProfileVideos).toHaveBeenCalledWith({
+      handle: 'janedoe',
+    });
     expect(spies.insertValues).toHaveBeenCalledTimes(1);
     const rows = spies.insertValues.mock.calls[0][0];
     // 2 items in fixture, both fit within DEFAULT_POST_COUNT=9
@@ -297,9 +309,9 @@ describe('SyncPostsProcessor', () => {
     authorsMock.findOne.mockRejectedValue(new Error('DB down'));
 
     const processor = build(db);
-    await expect(processor.process(jobFor({ authorId: 'author-1' }))).rejects.toThrow(
-      'DB down',
-    );
+    await expect(
+      processor.process(jobFor({ authorId: 'author-1' })),
+    ).rejects.toThrow('DB down');
   });
 
   it('TikTok post with .heic mediaUrl → embedded as data:image/jpeg;base64,', async () => {
@@ -309,8 +321,17 @@ describe('SyncPostsProcessor', () => {
         {
           desc: 'HEIC cover video',
           create_time: 1700000000,
-          statistics: { digg_count: 1, comment_count: 1, play_count: 1, share_count: 0 },
-          video: { cover: { url_list: ['https://p16-cdn.tiktokcdn.com/cover.heic?sign=abc'] } },
+          statistics: {
+            digg_count: 1,
+            comment_count: 1,
+            play_count: 1,
+            share_count: 0,
+          },
+          video: {
+            cover: {
+              url_list: ['https://p16-cdn.tiktokcdn.com/cover.heic?sign=abc'],
+            },
+          },
         },
       ],
     };

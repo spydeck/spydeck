@@ -15,7 +15,12 @@ import { normalizeHandle, youtubeProfileParams } from './social-handle';
 // ponytail: facebook has no ScrapeCreators post endpoint; reject explicitly.
 type SupportedPlatform = 'instagram' | 'tiktok' | 'youtube' | 'x';
 
-const EXTRACTABLE: SupportedPlatform[] = ['instagram', 'tiktok', 'youtube', 'x'];
+const EXTRACTABLE: SupportedPlatform[] = [
+  'instagram',
+  'tiktok',
+  'youtube',
+  'x',
+];
 
 const DEFAULT_POST_COUNT = 9;
 
@@ -31,7 +36,12 @@ type PostRow = {
   videoUrl: string | null;
   postUrl: string | null;
   date: Date;
-  engagement: { likes: number; comments: number; views: number; shares: number };
+  engagement: {
+    likes: number;
+    comments: number;
+    views: number;
+    shares: number;
+  };
   status: 'draft';
 };
 
@@ -156,7 +166,9 @@ function mapTwitterPosts(authorId: string, raw: unknown): PostRow[] {
       postUrl: legacy?.id_str
         ? `https://x.com/i/status/${String(legacy.id_str)}`
         : null,
-      date: legacy?.created_at ? new Date(legacy.created_at as string) : new Date(0),
+      date: legacy?.created_at
+        ? new Date(legacy.created_at as string)
+        : new Date(0),
       engagement: {
         likes: Number(legacy?.favorite_count ?? 0),
         comments: Number(legacy?.reply_count ?? 0),
@@ -242,7 +254,12 @@ export class SyncPostsProcessor extends WorkerHost {
 
         const cfg = await this.sync.getSyncConfig(authorId, platform);
         const scope = cfg
-          ? { mode: cfg.mode, count: cfg.postCount, from: cfg.fromDate, to: cfg.toDate }
+          ? {
+              mode: cfg.mode,
+              count: cfg.postCount,
+              from: cfg.fromDate,
+              to: cfg.toDate,
+            }
           : { mode: 'count' as const, count: DEFAULT_POST_COUNT };
 
         let raw: unknown;
@@ -270,7 +287,9 @@ export class SyncPostsProcessor extends WorkerHost {
         // One page per platform per job. Implement cursor-based pagination when needed.
 
         if (mapped.length === 0) {
-          this.logger.log(`no ${platform} posts to insert for author ${authorId}`);
+          this.logger.log(
+            `no ${platform} posts to insert for author ${authorId}`,
+          );
           continue;
         }
 
@@ -286,7 +305,9 @@ export class SyncPostsProcessor extends WorkerHost {
           }
         }
         if (heicEmbedded > 0) {
-          this.logger.log(`embedded ${heicEmbedded} HEIC cover(s) for ${platform} / author ${authorId}`);
+          this.logger.log(
+            `embedded ${heicEmbedded} HEIC cover(s) for ${platform} / author ${authorId}`,
+          );
         }
 
         await this.db.insert(posts).values(mapped);
@@ -305,41 +326,63 @@ export class SyncPostsProcessor extends WorkerHost {
     }
   }
 
-  private async embedHeicCover(url: string, platform: string): Promise<string | null> {
+  private async embedHeicCover(
+    url: string,
+    platform: string,
+  ): Promise<string | null> {
     try {
       const res = await fetch(url);
       if (!res.ok) return null;
       const contentLength = Number(res.headers.get('content-length') ?? 0);
       if (contentLength > MAX_HEIC_BYTES) {
-        this.logger.warn(`HEIC cover too large (${contentLength} bytes) for ${platform}: ${url}`);
+        this.logger.warn(
+          `HEIC cover too large (${contentLength} bytes) for ${platform}: ${url}`,
+        );
         return null;
       }
       const input = Buffer.from(await res.arrayBuffer());
       if (input.byteLength > MAX_HEIC_BYTES) return null; // guard if header was absent
       // heic-convert bundles libde265 (WASM) which handles HEVC-encoded HEIC;
       // sharp's prebuilt libheif does NOT include the HEVC decoder.
-      const jpegRaw = await convert({ buffer: input, format: 'JPEG', quality: 0.8 });
+      const jpegRaw = await convert({
+        buffer: input,
+        format: 'JPEG',
+        quality: 0.8,
+      });
       const jpeg = await sharp(Buffer.from(jpegRaw))
         .resize({ width: 600, withoutEnlargement: true })
         .jpeg({ quality: 72 })
         .toBuffer();
       return `data:image/jpeg;base64,${jpeg.toString('base64')}`;
     } catch (err) {
-      this.logger.warn(`failed to transcode HEIC cover for ${platform}: ${url} — ${(err as Error).message}`);
+      this.logger.warn(
+        `failed to transcode HEIC cover for ${platform}: ${url} — ${(err as Error).message}`,
+      );
       return null;
     }
   }
 
-  private fetchPosts(platform: SupportedPlatform, value: string): Promise<unknown> {
+  private fetchPosts(
+    platform: SupportedPlatform,
+    value: string,
+  ): Promise<unknown> {
     switch (platform) {
       case 'instagram':
-        return this.scrapeCreators.instagramPosts({ handle: normalizeHandle(value) });
+        return this.scrapeCreators.instagramPosts({
+          handle: normalizeHandle(value),
+        });
       case 'tiktok':
-        return this.scrapeCreators.tiktokProfileVideos({ handle: normalizeHandle(value) });
+        return this.scrapeCreators.tiktokProfileVideos({
+          handle: normalizeHandle(value),
+        });
       case 'youtube':
-        return this.scrapeCreators.youtubeChannelVideos(youtubeProfileParams(value));
+        return this.scrapeCreators.youtubeChannelVideos(
+          youtubeProfileParams(value),
+        );
       case 'x':
-        return this.scrapeCreators.twitterTweets({ handle: normalizeHandle(value) });
+        return this.scrapeCreators.twitterTweets({
+          handle: normalizeHandle(value),
+        });
     }
   }
 }

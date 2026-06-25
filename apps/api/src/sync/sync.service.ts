@@ -50,7 +50,9 @@ export class SyncService {
     }
   }
 
-  async enqueueSyncPosts(payload: SyncPostsPayload): Promise<{ jobId: string }> {
+  async enqueueSyncPosts(
+    payload: SyncPostsPayload,
+  ): Promise<{ jobId: string }> {
     try {
       const job = await this.syncPostsQueue.add('sync-posts', payload, {
         attempts: 3,

@@ -194,10 +194,13 @@ export const authorSyncConfigs = pgTable(
       .references(() => authors.id, { onDelete: 'cascade' }),
     platform: platformEnum('platform').notNull(),
     // 'full' = all posts, 'count' = last N posts, 'range' = date window
-    mode: text('mode').$type<'full' | 'count' | 'range'>().notNull().default('full'),
+    mode: text('mode')
+      .$type<'full' | 'count' | 'range'>()
+      .notNull()
+      .default('full'),
     postCount: integer('post_count'), // set when mode = 'count'
-    fromDate: text('from_date'),      // ISO date string, set when mode = 'range'
-    toDate: text('to_date'),          // ISO date string, set when mode = 'range'
+    fromDate: text('from_date'), // ISO date string, set when mode = 'range'
+    toDate: text('to_date'), // ISO date string, set when mode = 'range'
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),

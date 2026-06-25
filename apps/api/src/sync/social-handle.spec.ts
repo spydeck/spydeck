@@ -36,7 +36,9 @@ describe('social-handle', () => {
 
     it('routes a name/@handle to handle with @', () => {
       expect(youtubeProfileParams('nateherk')).toEqual({ handle: '@nateherk' });
-      expect(youtubeProfileParams('@nateherk')).toEqual({ handle: '@nateherk' });
+      expect(youtubeProfileParams('@nateherk')).toEqual({
+        handle: '@nateherk',
+      });
     });
   });
 });

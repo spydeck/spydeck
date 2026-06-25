@@ -31,7 +31,7 @@ media, and direct links back to the original post.
 |----------|-------|
 | Frontend | Next.js 16 · React 19 · Tailwind · shadcn/ui · TanStack Query & Table · dnd-kit · Recharts |
 | Backend  | NestJS 11 · Drizzle ORM · BullMQ (Redis) · class-validator |
-| Data     | Neon / Postgres · Redis |
+| Data     | Postgres (local or Neon) · Redis |
 | External | ScrapeCreators API (post data) · Apify API |
 | Tooling  | Turborepo · pnpm · TypeScript |
 
@@ -58,7 +58,7 @@ The API is organized into feature modules: `authors`, `content`, `sync`,
 
 - **Node.js** ≥ 18
 - **pnpm** 9 (`corepack enable` then `corepack prepare pnpm@9 --activate`)
-- A **Postgres** database — [Neon](https://neon.tech) works out of the box (the API uses `@neondatabase/serverless`)
+- A **Postgres** database — any Postgres works (local, Docker, or a managed host like [Neon](https://neon.tech))
 - A **Redis** instance (for the BullMQ sync queue)
 - A **ScrapeCreators** API key — https://scrapecreators.com (used to fetch post data)
 
@@ -107,6 +107,28 @@ pnpm dev          # web on :3000, api on :4000
 Then open <http://localhost:3000>, add an author on the **Authors** page, and hit **Sync**.
 
 ---
+
+## Run with Docker
+
+The repo ships a `docker-compose.yml` that runs the web app, API, a Postgres
+database, and Redis — no external services required.
+
+```sh
+cp .env.docker.example .env          # add your SCRAPECREATORS_API_KEY
+docker compose up --build            # web :3000 · api :4000 · postgres :5432 · redis :6379
+```
+
+Then apply migrations against the database once it's up:
+
+```sh
+DATABASE_URL=postgresql://socialplanner:socialplanner@localhost:5432/socialplanner \
+  pnpm --filter api db:migrate
+```
+
+To use a managed Postgres (e.g. Neon) instead of the bundled one, set
+`DATABASE_URL` in `.env` — the API uses the standard `pg` driver and connects to
+either. `NEXT_PUBLIC_API_URL` is baked into the web image at build time, so change
+it and rebuild for a non-localhost deployment.
 
 ## Commands
 

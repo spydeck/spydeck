@@ -94,11 +94,15 @@ describe('SyncService.saveSyncConfigs', () => {
   it('logs and rethrows on db error', async () => {
     const { db } = makeDb();
     const boom = new Error('db down');
-    db.insert = jest.fn(() => { throw boom; });
+    db.insert = jest.fn(() => {
+      throw boom;
+    });
     const errorSpy = jest.spyOn(Logger.prototype, 'error');
 
     await expect(
-      build(db).saveSyncConfigs('author-1', [{ platform: 'youtube', mode: 'full' }]),
+      build(db).saveSyncConfigs('author-1', [
+        { platform: 'youtube', mode: 'full' },
+      ]),
     ).rejects.toBe(boom);
 
     expect(errorSpy).toHaveBeenCalled();
