@@ -1,10 +1,11 @@
 import type { PlatformKey } from "@/lib/authors"
 
 export function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+  // dd/mm/yyyy
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
-    month: "short",
-    day: "numeric",
   }).format(new Date(iso))
 }
 

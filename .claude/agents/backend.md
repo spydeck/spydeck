@@ -38,3 +38,15 @@ For any library, framework, SDK, or API not covered by the skills above (or to c
 - Tests are Jest: unit specs are `*.spec.ts` under `src/`; e2e config is `test/jest-e2e.json`. Run `pnpm --filter api test` (and `test:e2e` for integration) before declaring work done.
 - `turbo.json` build outputs must keep both `.next/**` and `dist/**` — don't trim `dist/**` or the API's build cache breaks.
 - This is a lazy codebase: reuse existing modules and patterns before adding new ones; stdlib and already-installed deps over new dependencies. Run a `nestjs-code-review` pass on your own changes when the feature is non-trivial.
+
+## Version control — commit progressively
+
+Commit your work in small, coherent increments as you go — one commit per completed, self-contained piece of functionality, not one giant commit at the end. Concretely:
+
+- After a feature/module is finished **and** `pnpm --filter api test` (plus `test:e2e` for integration work) passes, stage the related files and commit.
+- Use Conventional Commits, written in English: `feat:`, `fix:`, `refactor:`, `chore:`, etc. (e.g. `feat(api): add posts module with CRUD endpoints`).
+- Scope each commit to one logical change so history stays reviewable; don't bundle unrelated edits.
+- Do **not** `git push` and do **not** open PRs unless explicitly asked — commit locally only.
+- If the working tree starts on the default branch (`main`) and the user hasn't said to commit there, create a short-lived feature branch first.
+- End every commit message body with the trailer:
+  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`

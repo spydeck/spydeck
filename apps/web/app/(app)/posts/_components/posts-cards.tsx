@@ -13,7 +13,7 @@ import {
   postTypeLabel,
   toHandle,
 } from "./post-helpers"
-import { PlatformIcon } from "./platform-icon"
+import { PlatformIcon } from "@/components/platform-icon"
 
 interface PostsCardsProps {
   posts: Post[]

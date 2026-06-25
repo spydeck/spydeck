@@ -38,3 +38,16 @@ This project has the **next-devtools MCP** (`next-devtools` server in `.mcp.json
 - `@repo/ui` ships raw `.tsx` (no build step); edits are picked up directly by `web`.
 - Run `pnpm --filter web check-types` and `pnpm --filter web lint` (max-warnings 0) before declaring work done.
 - This is a lazy codebase: reuse existing components and patterns before adding new ones; native platform features and already-installed deps over new dependencies.
+- **Default table: always use the reusable `DataTable` at `@/components/ui/data-table.tsx`** (TanStack Table-based, generic `DataTable<TData, TValue>` taking `columns` / `data` / `isLoading` / `emptyMessage`). For any new or migrated table, define `ColumnDef[]` and render through `DataTable` — do NOT hand-roll raw shadcn `Table` primitives, and do NOT reuse the heavyweight dashboard-specific `components/data-table.tsx`. Keep row-action state (dialogs, confirmations) in the parent and pass handlers into a columns factory.
+
+## Version control — commit progressively
+
+Commit your work in small, coherent increments as you go — one commit per completed, self-contained piece of functionality, not one giant commit at the end. Concretely:
+
+- After a feature/component is finished **and** `pnpm --filter web check-types` + `pnpm --filter web lint` pass, stage the related files and commit.
+- Use Conventional Commits, written in English: `feat:`, `fix:`, `refactor:`, `chore:`, etc. (e.g. `feat(web): add reusable DataTable component`).
+- Scope each commit to one logical change so history stays reviewable; don't bundle unrelated edits.
+- Do **not** `git push` and do **not** open PRs unless explicitly asked — commit locally only.
+- If the working tree starts on the default branch (`main`) and the user hasn't said to commit there, create a short-lived feature branch first.
+- End every commit message body with the trailer:
+  `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`

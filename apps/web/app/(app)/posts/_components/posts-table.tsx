@@ -9,6 +9,7 @@ import { DataTable } from "@/components/ui/data-table"
 import { PLATFORMS, useAuthors } from "@/lib/authors"
 import type { Post } from "@/lib/posts"
 import { formatDate } from "./post-helpers"
+import { PlatformIcon } from "@/components/platform-icon"
 
 interface PostsTableProps {
   posts: Post[]
@@ -43,6 +44,12 @@ export function PostsTable({ posts, isPending, showAuthor, renderAction }: Posts
       id: "platform",
       header: "Platform",
       accessorFn: (row) => platformLabel(row.platform),
+      cell: ({ row }) => (
+        <span className="flex items-center gap-2">
+          <PlatformIcon platform={row.original.platform} className="size-4 shrink-0" />
+          {platformLabel(row.original.platform)}
+        </span>
+      ),
     },
     {
       accessorKey: "text",
