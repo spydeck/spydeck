@@ -61,7 +61,7 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
         const { views, likes, comments, shares } = post.engagement
 
         return (
-          <Card key={post.id} className="overflow-hidden border rounded-xl flex flex-col">
+          <Card key={post.id} className="overflow-hidden border rounded-xl flex flex-col gap-0 py-0">
             {/* Header strip */}
             <div className="bg-muted/40 border-b px-3 py-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
@@ -79,17 +79,22 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
 
             {/* Media */}
             {post.mediaUrl ? (
-              <div className="relative w-full aspect-[4/3]">
+              <a
+                href={post.mediaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative block w-full aspect-[4/3] bg-muted transition-opacity hover:opacity-95"
+              >
                 <Image
                   src={post.mediaUrl}
                   alt=""
                   fill
-                  className="object-cover"
+                  className="object-contain"
                 />
                 <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md">
                   {dateShort}
                 </span>
-              </div>
+              </a>
             ) : (
               <div className="px-3 pt-3 text-right">
                 <span className="text-xs text-muted-foreground">{dateShort}</span>

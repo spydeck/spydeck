@@ -28,7 +28,7 @@ export function SwipeBookmarkButton({ postId }: SwipeBookmarkButtonProps) {
       className="size-8"
     >
       <Bookmark
-        className={cn("size-4", isSaved && "fill-current")}
+        className={cn("size-4 text-red-500", isSaved && "fill-current")}
       />
     </Button>
   )

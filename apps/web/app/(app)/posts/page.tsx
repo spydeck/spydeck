@@ -160,7 +160,7 @@ export default function PostsPage() {
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
-                  className="w-52 justify-between"
+                  className="w-72 justify-between"
                 >
                   <span className="flex items-center gap-1.5 min-w-0">
                     {selectedAuthor && (
@@ -174,7 +174,7 @@ export default function PostsPage() {
                   <ChevronsUpDown data-icon="inline-end" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-52 p-0">
+              <PopoverContent className="w-72 p-0">
                 <Command>
                   <CommandInput placeholder="Search author…" />
                   <CommandList>

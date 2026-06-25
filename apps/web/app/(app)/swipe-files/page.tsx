@@ -60,7 +60,7 @@ export default function SwipeFilesPage() {
             </Link>
           </p>
         ) : (
-          <Tabs defaultValue="table">
+          <Tabs defaultValue="cards">
             <TabsList>
               <TabsTrigger value="table">Table</TabsTrigger>
               <TabsTrigger value="cards">Cards</TabsTrigger>
