@@ -12,6 +12,10 @@ Turborepo monorepo (pnpm workspaces) with two apps and three shared packages. No
 - `packages/eslint-config` — `@repo/eslint-config`, exposes `./base`, `./next-js`, `./react-internal`
 - `packages/typescript-config` — `@repo/typescript-config`, shared tsconfig presets
 
+## Conventions
+
+- **Language: English only.** All application language must be in English — UI copy, labels, placeholders, button text, toast/notification messages, validation/error messages, empty states, and any user-facing string. Code identifiers, comments, and commit messages are English too. Do not introduce Spanish (or any non-English) strings into the app.
+
 ## Commands
 
 Run from the repo root; Turbo orchestrates across workspaces.
