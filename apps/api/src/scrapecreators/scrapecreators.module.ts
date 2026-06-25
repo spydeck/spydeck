@@ -13,6 +13,6 @@ import { ScrapeCreatorsAccountService } from './scrapecreators-account.service';
     ScrapeCreatorsService,
     ScrapeCreatorsAccountService,
   ],
-  exports: [ScrapeCreatorsService],
+  exports: [ScrapeCreatorsService, ScrapeCreatorsClient],
 })
 export class ScrapeCreatorsModule {}

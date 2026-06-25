@@ -11,6 +11,7 @@ import { SettingsModule } from './settings/settings.module';
 import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module';
 import { ApifyModule } from './apify/apify.module';
 import { SyncModule } from './sync/sync.module';
+import { AdsModule } from './ads/ads.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { SyncModule } from './sync/sync.module';
     ScrapeCreatorsModule,
     ApifyModule,
     SyncModule,
+    AdsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
