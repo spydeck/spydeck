@@ -3,6 +3,7 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { eq, count } from 'drizzle-orm';
 import sharp from 'sharp';
+import convert from 'heic-convert';
 import { AuthorsService } from '../authors/authors.service';
 import { ScrapeCreatorsService } from '../scrapecreators/scrapecreators.service';
 import { SyncService } from './sync.service';
@@ -282,7 +283,10 @@ export class SyncPostsProcessor extends WorkerHost {
       }
       const input = Buffer.from(await res.arrayBuffer());
       if (input.byteLength > MAX_HEIC_BYTES) return null; // guard if header was absent
-      const jpeg = await sharp(input)
+      // heic-convert bundles libde265 (WASM) which handles HEVC-encoded HEIC;
+      // sharp's prebuilt libheif does NOT include the HEVC decoder.
+      const jpegRaw = await convert({ buffer: input, format: 'JPEG', quality: 0.8 });
+      const jpeg = await sharp(Buffer.from(jpegRaw))
         .resize({ width: 600, withoutEnlargement: true })
         .jpeg({ quality: 72 })
         .toBuffer();

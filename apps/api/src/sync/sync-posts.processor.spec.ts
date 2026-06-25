@@ -6,6 +6,12 @@ import { AuthorsService } from '../authors/authors.service';
 import { ScrapeCreatorsService } from '../scrapecreators/scrapecreators.service';
 import { SyncService } from './sync.service';
 
+// Mock heic-convert so the WASM decoder doesn't run in tests.
+jest.mock('heic-convert', () => ({
+  __esModule: true,
+  default: jest.fn().mockResolvedValue(Buffer.from('decoded')),
+}));
+
 // Mock sharp so no native binary runs in tests.
 // The chain .resize().jpeg().toBuffer() resolves to a small JPEG-like buffer.
 jest.mock('sharp', () => {
