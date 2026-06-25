@@ -181,8 +181,39 @@ export const authorsProfileLinks = pgTable(
   ],
 );
 
+// Per (author, platform) sync scope chosen by the user when adding the author.
+// A future posts-sync operation reads this to decide how far back to fetch.
+export const authorSyncConfigs = pgTable(
+  'author_sync_configs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => authors.id, { onDelete: 'cascade' }),
+    platform: platformEnum('platform').notNull(),
+    // 'full' = all posts, 'count' = last N posts, 'range' = date window
+    mode: text('mode').$type<'full' | 'count' | 'range'>().notNull().default('full'),
+    postCount: integer('post_count'), // set when mode = 'count'
+    fromDate: text('from_date'),      // ISO date string, set when mode = 'range'
+    toDate: text('to_date'),          // ISO date string, set when mode = 'range'
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique('author_sync_configs_author_id_platform_unique').on(
+      table.authorId,
+      table.platform,
+    ),
+  ],
+);
+
 export const authorsRelations = relations(authors, ({ many }) => ({
   profiles: many(authorsProfiles),
+  syncConfigs: many(authorSyncConfigs),
 }));
 
 export const authorsProfilesRelations = relations(
@@ -193,6 +224,16 @@ export const authorsProfilesRelations = relations(
       references: [authors.id],
     }),
     links: many(authorsProfileLinks),
+  }),
+);
+
+export const authorSyncConfigsRelations = relations(
+  authorSyncConfigs,
+  ({ one }) => ({
+    author: one(authors, {
+      fields: [authorSyncConfigs.authorId],
+      references: [authors.id],
+    }),
   }),
 );
 
@@ -216,3 +257,5 @@ export type AuthorProfile = typeof authorsProfiles.$inferSelect;
 export type NewAuthorProfile = typeof authorsProfiles.$inferInsert;
 export type AuthorProfileLink = typeof authorsProfileLinks.$inferSelect;
 export type NewAuthorProfileLink = typeof authorsProfileLinks.$inferInsert;
+export type AuthorSyncConfig = typeof authorSyncConfigs.$inferSelect;
+export type NewAuthorSyncConfig = typeof authorSyncConfigs.$inferInsert;

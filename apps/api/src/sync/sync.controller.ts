@@ -7,9 +7,10 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
 } from '@nestjs/common';
 import { SyncService } from './sync.service';
-import { ExtractProfileDto } from './sync.dto';
+import { ExtractProfileDto, SaveSyncConfigsDto } from './sync.dto';
 
 @Controller('sync')
 export class SyncController {
@@ -30,5 +31,13 @@ export class SyncController {
       authorId: id,
       platform: dto.platform,
     });
+  }
+
+  @Put('authors/:id/sync-config')
+  saveSyncConfigs(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SaveSyncConfigsDto,
+  ) {
+    return this.syncService.saveSyncConfigs(id, dto.configs);
   }
 }

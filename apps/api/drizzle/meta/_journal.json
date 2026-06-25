@@ -29,6 +29,13 @@
       "when": 1782399867607,
       "tag": "0003_normalize_authors_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782404146959,
+      "tag": "0004_tired_vision",
+      "breakpoints": true
     }
   ]
 }

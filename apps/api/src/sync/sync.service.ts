@@ -1,13 +1,21 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { and, eq } from 'drizzle-orm';
+import { DB } from '../db/database.module';
+import type { DrizzleDB } from '../db/database.module';
+import { authorSyncConfigs } from '../db/schema';
 import { ProfileExtractPayload } from './profile-extract.processor';
+import type { SyncConfigItemDto } from './sync.dto';
 
 @Injectable()
 export class SyncService {
   private readonly logger = new Logger(SyncService.name);
 
-  constructor(@InjectQueue('profile-extract') private readonly queue: Queue) {}
+  constructor(
+    @InjectQueue('profile-extract') private readonly queue: Queue,
+    @Inject(DB) private readonly db: DrizzleDB,
+  ) {}
 
   health() {
     this.logger.debug('sync health check');
@@ -38,5 +46,59 @@ export class SyncService {
       );
       throw err;
     }
+  }
+
+  async saveSyncConfigs(authorId: string, items: SyncConfigItemDto[]) {
+    try {
+      const rows = await Promise.all(
+        items.map((item) => {
+          // Null out fields irrelevant to the mode so stale data never leaks
+          const postCount = item.mode === 'count' ? (item.count ?? null) : null;
+          const fromDate = item.mode === 'range' ? (item.from ?? null) : null;
+          const toDate = item.mode === 'range' ? (item.to ?? null) : null;
+
+          return this.db
+            .insert(authorSyncConfigs)
+            .values({
+              authorId,
+              platform: item.platform,
+              mode: item.mode,
+              postCount,
+              fromDate,
+              toDate,
+            })
+            .onConflictDoUpdate({
+              target: [authorSyncConfigs.authorId, authorSyncConfigs.platform],
+              set: {
+                mode: item.mode,
+                postCount,
+                fromDate,
+                toDate,
+                updatedAt: new Date(),
+              },
+            })
+            .returning();
+        }),
+      );
+      this.logger.log(
+        `saved ${items.length} sync config(s) for author ${authorId}`,
+      );
+      return rows.flat();
+    } catch (err) {
+      this.logger.error(
+        `failed to save sync configs for author ${authorId}`,
+        (err as Error).stack,
+      );
+      throw err;
+    }
+  }
+
+  async getSyncConfig(authorId: string, platform: string) {
+    return this.db.query.authorSyncConfigs.findFirst({
+      where: and(
+        eq(authorSyncConfigs.authorId, authorId),
+        eq(authorSyncConfigs.platform, platform as any),
+      ),
+    });
   }
 }
