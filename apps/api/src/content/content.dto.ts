@@ -39,6 +39,14 @@ export class CreateContentDto {
   @IsString()
   mediaUrl?: string;
 
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  postUrl?: string;
+
   @IsEnum(['draft', 'scheduled', 'published'])
   status!: 'draft' | 'scheduled' | 'published';
 
@@ -67,6 +75,14 @@ export class UpdateContentDto {
   @IsOptional()
   @IsString()
   mediaUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  postUrl?: string;
 
   @IsOptional()
   @IsEnum(['draft', 'scheduled', 'published'])

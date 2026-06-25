@@ -1,159 +1,160 @@
-# Turborepo starter
+# Social Planner
 
-This Turborepo starter is maintained by the Turborepo core team.
+A self-hosted tool for collecting, browsing, and building a **swipe file** of social
+media posts from creators you follow. Point it at a TikTok / Instagram / YouTube / X
+handle, sync their recent posts, and study what works — engagement metrics, captions,
+media, and direct links back to the original post.
 
-## Using this example
+> Built as a Turborepo monorepo: a Next.js frontend and a NestJS backend that pulls
+> data through the [ScrapeCreators](https://scrapecreators.com) API and stores it in Postgres.
 
-Run the following command:
+---
 
-```sh
-npx create-turbo@latest
+## Features
+
+- **Multi-platform sync** — fetch recent posts from TikTok, Instagram, YouTube, and X for any author.
+- **Posts explorer** — card and table views with sorting by date, likes, comments, and engagement ratios.
+- **Post detail sidebar** — caption, full metrics, inline video playback (or cover image), and a link to the original post.
+- **Swipe files** — bookmark posts worth keeping for reference.
+- **Per-author sync config** — sync the last *N* posts or a date range.
+- **Background jobs** — syncing runs on a BullMQ queue so the UI stays responsive.
+- **HEIC handling** — TikTok HEVC-HEIC covers are transcoded server-side so browsers can render them.
+
+> **Note:** there is no authentication yet — the app runs as a single implicit user.
+> Don't expose it to the public internet without putting it behind your own auth/proxy.
+
+---
+
+## Tech stack
+
+| Layer    | Stack |
+|----------|-------|
+| Frontend | Next.js 16 · React 19 · Tailwind · shadcn/ui · TanStack Query & Table · dnd-kit · Recharts |
+| Backend  | NestJS 11 · Drizzle ORM · BullMQ (Redis) · class-validator |
+| Data     | Neon / Postgres · Redis |
+| External | ScrapeCreators API (post data) · Apify API |
+| Tooling  | Turborepo · pnpm · TypeScript |
+
+---
+
+## Project structure
+
+```
+apps/
+  web/    Next.js frontend (port 3000)
+  api/    NestJS backend (port 4000)
+packages/
+  ui/                 shared React components (@repo/ui, raw TSX, no build step)
+  eslint-config/      shared ESLint presets
+  typescript-config/  shared tsconfig presets
 ```
 
-## What's inside?
+The API is organized into feature modules: `authors`, `content`, `sync`,
+`swipe`, `settings`, `scrapecreators`, and `apify`.
 
-This Turborepo includes the following packages/apps:
+---
 
-### Apps and Packages
+## Prerequisites
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- **Node.js** ≥ 18
+- **pnpm** 9 (`corepack enable` then `corepack prepare pnpm@9 --activate`)
+- A **Postgres** database — [Neon](https://neon.tech) works out of the box (the API uses `@neondatabase/serverless`)
+- A **Redis** instance (for the BullMQ sync queue)
+- A **ScrapeCreators** API key — https://scrapecreators.com (used to fetch post data)
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+---
 
-### Utilities
+## Getting started
 
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+### 1. Install
 
 ```sh
-cd my-turborepo
-turbo build
+pnpm install
 ```
 
-Without global `turbo`, use your package manager:
+### 2. Configure environment
+
+**`apps/api/.env`**
 
 ```sh
-cd my-turborepo
-npx turbo build
-pnpm dlx turbo build
-pnpm exec turbo build
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+SCRAPECREATORS_API_KEY=your_key_here
+APIFY_API_KEY=your_key_here
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+**`apps/web/.env.local`**
 
 ```sh
-turbo build --filter=docs
+NEXT_PUBLIC_API_URL=http://localhost:4000
 ```
 
-Without global `turbo`:
+(`.env.example` files are provided in each app.)
+
+### 3. Run database migrations
 
 ```sh
-npx turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
+pnpm --filter api db:migrate
 ```
 
-### Develop
-
-To develop all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+### 4. Start everything
 
 ```sh
-cd my-turborepo
-turbo dev
+pnpm dev          # web on :3000, api on :4000
 ```
 
-Without global `turbo`, use your package manager:
+Then open <http://localhost:3000>, add an author on the **Authors** page, and hit **Sync**.
+
+---
+
+## Commands
+
+Run from the repo root (Turbo orchestrates across workspaces):
 
 ```sh
-cd my-turborepo
-npx turbo dev
-pnpm exec turbo dev
-pnpm exec turbo dev
+pnpm dev           # run all apps in watch mode
+pnpm build         # build all apps
+pnpm lint          # eslint across workspaces
+pnpm check-types   # tsc --noEmit across workspaces
+pnpm format        # prettier on **/*.{ts,tsx,md}
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Target a single app with `--filter`:
 
 ```sh
-turbo dev --filter=web
+pnpm --filter web dev
+pnpm --filter api dev
+pnpm --filter api test         # jest unit tests
 ```
 
-Without global `turbo`:
+### Database (Drizzle)
 
 ```sh
-npx turbo dev --filter=web
-pnpm exec turbo dev --filter=web
-pnpm exec turbo dev --filter=web
+pnpm --filter api db:generate  # generate a migration from schema changes
+pnpm --filter api db:migrate   # apply pending migrations
+pnpm --filter api db:push      # push schema directly (dev only)
 ```
 
-### Remote Caching
+> Migrations are generated from `apps/api/src/db/schema.ts`. Never hand-edit the
+> generated snapshots in `apps/api/drizzle/` — regenerate them with `db:generate`.
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+---
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+## Contributing
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Issues and pull requests are welcome. Before opening a PR:
 
 ```sh
-cd my-turborepo
-turbo login
+pnpm lint
+pnpm check-types
+pnpm --filter api test
 ```
 
-Without global `turbo`, use your package manager:
+All user-facing strings must be in **English**.
 
-```sh
-cd my-turborepo
-npx turbo login
-pnpm exec turbo login
-pnpm exec turbo login
-```
+---
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+## License
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-pnpm exec turbo link
-pnpm exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+MIT — see [LICENSE](./LICENSE).

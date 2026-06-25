@@ -30,6 +30,7 @@ import { usePosts, type Post } from "@/lib/posts"
 import { PostsTable } from "./_components/posts-table"
 import { PostsCards } from "./_components/posts-cards"
 import { SwipeBookmarkButton } from "./_components/swipe-bookmark-button"
+import { PostDetailSidebar } from "@/components/post-detail-sidebar"
 import { PlatformIcon } from "@/components/platform-icon"
 import { cn } from "@/lib/utils"
 
@@ -75,6 +76,7 @@ export default function PostsPage() {
   const [open, setOpen] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [sortBy, setSortBy] = useState<SortKey>("date_desc")
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null)
 
   // Parse "authorId::platform" or "authorId" or "all"
   const selectedAuthorId = authorFilter === "all" ? undefined : authorFilter.split("::")[0]
@@ -253,6 +255,7 @@ export default function PostsPage() {
                 posts={sortedPosts}
                 isPending={postsPending}
                 showAuthor={!selectedAuthorId}
+                onSelectPost={setSelectedPost}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
               />
             </TabsContent>
@@ -260,12 +263,14 @@ export default function PostsPage() {
               <PostsCards
                 posts={sortedPosts}
                 isPending={postsPending}
+                onSelectPost={setSelectedPost}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
               />
             </TabsContent>
           </Tabs>
         )}
       </div>
+      <PostDetailSidebar post={selectedPost} onClose={() => setSelectedPost(null)} />
     </>
   )
 }

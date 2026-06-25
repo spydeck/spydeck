@@ -12,6 +12,8 @@ export type Post = {
   platform: PlatformKey
   text: string
   mediaUrl?: string
+  videoUrl?: string
+  postUrl?: string
   status: PostStatus
   date: string // ISO string
   engagement: PostEngagement

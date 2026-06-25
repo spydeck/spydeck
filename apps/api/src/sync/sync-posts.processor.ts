@@ -28,10 +28,21 @@ type PostRow = {
   platform: SupportedPlatform;
   text: string;
   mediaUrl: string | null;
+  videoUrl: string | null;
+  postUrl: string | null;
   date: Date;
   engagement: { likes: number; comments: number; views: number; shares: number };
   status: 'draft';
 };
+
+// X/Twitter media carries multiple encodings; pick the highest-bitrate mp4.
+function pickTwitterVideo(media: any): string | null {
+  const variants = (media?.video_info?.variants ?? []) as any[];
+  const mp4s = variants
+    .filter((v) => v?.content_type === 'video/mp4' && v?.url)
+    .sort((a, b) => Number(b?.bitrate ?? 0) - Number(a?.bitrate ?? 0));
+  return (mp4s[0]?.url as string | undefined) ?? null;
+}
 
 // ── Per-platform raw response mappers ────────────────────────────────────────
 
@@ -44,6 +55,11 @@ function mapTiktokPosts(authorId: string, raw: unknown): PostRow[] {
     platform: 'tiktok' as const,
     text: String(item?.desc ?? ''),
     mediaUrl: (item?.video?.cover?.url_list?.[0] as string | undefined) ?? null,
+    videoUrl:
+      (item?.video?.play_addr?.url_list?.[0] as string | undefined) ??
+      (item?.video?.download_addr?.url_list?.[0] as string | undefined) ??
+      null,
+    postUrl: (item?.share_url as string | undefined) ?? null,
     date: new Date((Number(item?.create_time) || 0) * 1000),
     engagement: {
       likes: Number(item?.statistics?.digg_count ?? 0),
@@ -72,6 +88,10 @@ function mapInstagramPosts(authorId: string, raw: unknown): PostRow[] {
         (item?.image_versions2?.candidates?.[0]?.url as string | undefined) ??
         (item?.display_uri as string | undefined) ??
         null,
+      videoUrl: (item?.video_versions?.[0]?.url as string | undefined) ?? null,
+      postUrl: item?.code
+        ? `https://www.instagram.com/p/${String(item.code)}/`
+        : null,
       date: new Date((Number(item?.taken_at) || 0) * 1000),
       engagement: {
         likes: Number(item?.like_count ?? 0),
@@ -93,6 +113,13 @@ function mapYoutubePosts(authorId: string, raw: unknown): PostRow[] {
     platform: 'youtube' as const,
     text: String(item?.title ?? ''),
     mediaUrl: (item?.thumbnail as string | undefined) ?? null,
+    // ponytail: YouTube gives no direct stream URL; link the watch page instead.
+    videoUrl: null,
+    postUrl:
+      (item?.url as string | undefined) ??
+      (item?.id || item?.videoId
+        ? `https://www.youtube.com/watch?v=${String(item?.id ?? item?.videoId)}`
+        : null),
     date: item?.publishDate
       ? new Date(item.publishDate as string)
       : item?.publishedTime
@@ -123,6 +150,12 @@ function mapTwitterPosts(authorId: string, raw: unknown): PostRow[] {
       mediaUrl:
         (legacy?.entities?.media?.[0]?.media_url_https as string | undefined) ??
         null,
+      videoUrl: pickTwitterVideo(
+        legacy?.extended_entities?.media?.[0] ?? legacy?.entities?.media?.[0],
+      ),
+      postUrl: legacy?.id_str
+        ? `https://x.com/i/status/${String(legacy.id_str)}`
+        : null,
       date: legacy?.created_at ? new Date(legacy.created_at as string) : new Date(0),
       engagement: {
         likes: Number(legacy?.favorite_count ?? 0),

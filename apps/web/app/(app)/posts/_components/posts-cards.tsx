@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { Play, Heart, MessageCircle, Forward } from "lucide-react"
+import { Play, Heart, MessageCircle, Forward, ExternalLink } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -80,18 +80,24 @@ export function PostsCards({ posts, isPending, renderAction, onSelectPost }: Pos
               <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
                 <PlatformIcon platform={post.platform} className="size-4" />
                 <span className="text-sm">{typeLabel}</span>
+                {post.postUrl && (
+                  <a
+                    href={post.postUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Open original post in a new tab"
+                    className="ml-0.5 transition-colors hover:text-foreground"
+                  >
+                    <ExternalLink className="size-4" />
+                  </a>
+                )}
               </div>
             </div>
 
             {/* Media */}
             {post.mediaUrl ? (
-              <a
-                href={post.mediaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative block w-full aspect-[4/3] bg-muted transition-opacity hover:opacity-95"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="relative block w-full aspect-[4/3] bg-muted">
                 {post.mediaUrl.startsWith("data:") ? (
                   // Embedded base64 (e.g. transcoded TikTok HEIC covers) — render
                   // directly; next/image's optimizer is for remote URLs.
@@ -112,7 +118,7 @@ export function PostsCards({ posts, isPending, renderAction, onSelectPost }: Pos
                 <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md">
                   {dateShort}
                 </span>
-              </a>
+              </div>
             ) : (
               <div className="px-3 pt-3 text-right">
                 <span className="text-xs text-muted-foreground">{dateShort}</span>
@@ -127,22 +133,22 @@ export function PostsCards({ posts, isPending, renderAction, onSelectPost }: Pos
             </div>
 
             {/* Footer */}
-            <div className="flex items-center gap-4 px-3 pb-3 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1 text-sky-500">
+            <div className="flex items-center gap-2 px-3 pb-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1 rounded-md bg-sky-500/10 px-1.5 py-0.5 text-sky-500">
                 <Play className="size-3" />
-                {formatCompact(views ?? 0)}
+                <span className="font-semibold">{formatCompact(views ?? 0)}</span>
               </span>
-              <span className="flex items-center gap-1 text-rose-500">
+              <span className="flex items-center gap-1 rounded-md bg-rose-500/10 px-1.5 py-0.5 text-rose-500">
                 <Heart className="size-3" />
-                {formatCompact(likes ?? 0)}
+                <span className="font-semibold">{formatCompact(likes ?? 0)}</span>
               </span>
-              <span className="flex items-center gap-1 text-emerald-500">
+              <span className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-emerald-500">
                 <MessageCircle className="size-3" />
-                {formatCompact(comments ?? 0)}
+                <span className="font-semibold">{formatCompact(comments ?? 0)}</span>
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5">
                 <Forward className="size-3" />
-                {formatCompact(shares ?? 0)}
+                <span className="font-semibold">{formatCompact(shares ?? 0)}</span>
               </span>
               {renderAction && (
                 <div className="ml-auto -my-1" onClick={(e) => e.stopPropagation()}>
