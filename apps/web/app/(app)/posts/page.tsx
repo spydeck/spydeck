@@ -30,6 +30,7 @@ import { usePosts, type Post } from "@/lib/posts"
 import { PostsTable } from "./_components/posts-table"
 import { PostsCards } from "./_components/posts-cards"
 import { SwipeBookmarkButton } from "./_components/swipe-bookmark-button"
+import { PlatformIcon } from "@/components/platform-icon"
 import { cn } from "@/lib/utils"
 
 function authorAvatar(author: Author): string | undefined {
@@ -75,15 +76,20 @@ export default function PostsPage() {
   const [syncing, setSyncing] = useState(false)
   const [sortBy, setSortBy] = useState<SortKey>("date_desc")
 
+  // Parse "authorId::platform" or "authorId" or "all"
+  const selectedAuthorId = authorFilter === "all" ? undefined : authorFilter.split("::")[0]
+  const selectedPlatform = authorFilter.includes("::") ? authorFilter.split("::")[1] : undefined
+
   const { data: authors, isPending: authorsLoading } = useAuthors()
-  const { data: posts, isPending: postsPending } = usePosts(
-    authorFilter === "all" ? undefined : authorFilter
-  )
+  const { data: posts, isPending: postsPending } = usePosts(selectedAuthorId)
   const syncPosts = useSyncPosts()
   const queryClient = useQueryClient()
 
   const sortedPosts = useMemo(() => {
-    const list = [...(posts ?? [])]
+    let list = [...(posts ?? [])]
+    if (selectedPlatform) {
+      list = list.filter((p) => p.platform === selectedPlatform)
+    }
     list.sort((a, b) => {
       switch (sortBy) {
         case "date_desc": return new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -97,24 +103,27 @@ export default function PostsPage() {
       }
     })
     return list
-  }, [posts, sortBy])
+  }, [posts, sortBy, selectedPlatform])
 
   const noAuthors = !authorsLoading && (!authors || authors.length === 0)
-  const selectedAuthorName =
-    authorFilter === "all"
-      ? "All authors"
-      : (authors?.find((a) => a.id === authorFilter)?.name ?? "All authors")
+  const selectedAuthor = selectedAuthorId ? authors?.find((a) => a.id === selectedAuthorId) : undefined
+  const PLATFORM_LABEL: Record<string, string> = { instagram: "Instagram", tiktok: "TikTok", youtube: "YouTube", x: "X" }
+  const triggerLabel = authorFilter === "all"
+    ? "All authors"
+    : selectedPlatform
+      ? `${selectedAuthor?.name ?? ""} · ${PLATFORM_LABEL[selectedPlatform] ?? selectedPlatform}`
+      : (selectedAuthor?.name ?? "All authors")
 
   function handleSync() {
-    if (authorFilter === "all") return
-    syncPosts.mutate(authorFilter, {
+    if (!selectedAuthorId) return
+    syncPosts.mutate(selectedAuthorId, {
       onSuccess: () => {
         toast.info("Syncing posts…")
         setSyncing(true)
         // ponytail: timed affordance — sync is async/queued, no completion signal here
         setTimeout(() => {
           setSyncing(false)
-          queryClient.invalidateQueries({ queryKey: ["posts", authorFilter] })
+          queryClient.invalidateQueries({ queryKey: ["posts", selectedAuthorId] })
         }, SYNC_REFRESH_DELAY_MS)
       },
       onError: () => toast.error("Failed to start sync"),
@@ -151,65 +160,62 @@ export default function PostsPage() {
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
-                  className="w-48 justify-between"
+                  className="w-52 justify-between"
                 >
                   <span className="flex items-center gap-1.5 min-w-0">
-                    {authorFilter !== "all" && (() => {
-                      const a = authors?.find((x) => x.id === authorFilter)
-                      return a ? (
-                        <Avatar className="size-5 shrink-0">
-                          <AvatarImage src={authorAvatar(a)} />
-                          <AvatarFallback className="text-[9px]">{authorInitials(a.name)}</AvatarFallback>
-                        </Avatar>
-                      ) : null
-                    })()}
-                    <span className="truncate">{selectedAuthorName}</span>
+                    {selectedAuthor && (
+                      <Avatar className="size-5 shrink-0">
+                        <AvatarImage src={authorAvatar(selectedAuthor)} />
+                        <AvatarFallback className="text-[9px]">{authorInitials(selectedAuthor.name)}</AvatarFallback>
+                      </Avatar>
+                    )}
+                    <span className="truncate">{triggerLabel}</span>
                   </span>
                   <ChevronsUpDown data-icon="inline-end" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-48 p-0">
+              <PopoverContent className="w-52 p-0">
                 <Command>
                   <CommandInput placeholder="Search author…" />
                   <CommandList>
                     <CommandEmpty>No author found.</CommandEmpty>
                     <CommandGroup>
                       <CommandItem
-                        value="all"
-                        onSelect={() => {
-                          setAuthorFilter("all")
-                          setOpen(false)
-                        }}
+                        value="all authors"
+                        onSelect={() => { setAuthorFilter("all"); setOpen(false) }}
                       >
-                        <Check
-                          className={cn(
-                            "mr-2 size-4",
-                            authorFilter === "all" ? "opacity-100" : "opacity-0"
-                          )}
-                        />
+                        <Check className={cn("mr-2 size-4", authorFilter === "all" ? "opacity-100" : "opacity-0")} />
                         All authors
                       </CommandItem>
                       {authors?.map((author) => (
-                        <CommandItem
-                          key={author.id}
-                          value={author.name}
-                          onSelect={() => {
-                            setAuthorFilter(author.id)
-                            setOpen(false)
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 size-4",
-                              authorFilter === author.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <Avatar className="size-5 shrink-0 mr-1.5">
-                            <AvatarImage src={authorAvatar(author)} />
-                            <AvatarFallback className="text-[9px]">{authorInitials(author.name)}</AvatarFallback>
-                          </Avatar>
-                          {author.name}
-                        </CommandItem>
+                        <>
+                          <CommandItem
+                            key={author.id}
+                            value={`${author.name} ${author.profiles.map((p) => p.platform).join(" ")}`}
+                            onSelect={() => { setAuthorFilter(author.id); setOpen(false) }}
+                          >
+                            <Check className={cn("mr-2 size-4", authorFilter === author.id ? "opacity-100" : "opacity-0")} />
+                            <Avatar className="size-5 shrink-0 mr-1.5">
+                              <AvatarImage src={authorAvatar(author)} />
+                              <AvatarFallback className="text-[9px]">{authorInitials(author.name)}</AvatarFallback>
+                            </Avatar>
+                            {author.name}
+                          </CommandItem>
+                          {author.profiles.length > 1 && author.profiles.map((profile) => (
+                            <CommandItem
+                              key={`${author.id}::${profile.platform}`}
+                              value={`${author.name} ${profile.platform} ${profile.handle ?? ""}`}
+                              onSelect={() => { setAuthorFilter(`${author.id}::${profile.platform}`); setOpen(false) }}
+                              className="pl-8"
+                            >
+                              <Check className={cn("mr-2 size-4", authorFilter === `${author.id}::${profile.platform}` ? "opacity-100" : "opacity-0")} />
+                              <PlatformIcon platform={profile.platform} className="size-4 mr-1.5 shrink-0" />
+                              <span className="truncate text-muted-foreground">
+                                {profile.handle ? `@${profile.handle}` : PLATFORM_LABEL[profile.platform] ?? profile.platform}
+                              </span>
+                            </CommandItem>
+                          ))}
+                        </>
                       ))}
                     </CommandGroup>
                   </CommandList>
@@ -218,7 +224,7 @@ export default function PostsPage() {
             </Popover>
             <Button
               variant="outline"
-              disabled={authorFilter === "all" || syncing || syncPosts.isPending}
+              disabled={!selectedAuthorId || syncing || syncPosts.isPending}
               onClick={handleSync}
             >
               <RefreshCw
@@ -238,7 +244,7 @@ export default function PostsPage() {
             </Link>
           </p>
         ) : (
-          <Tabs defaultValue="table">
+          <Tabs defaultValue="cards">
             <TabsList>
               <TabsTrigger value="table">Table</TabsTrigger>
               <TabsTrigger value="cards">Cards</TabsTrigger>
@@ -247,7 +253,7 @@ export default function PostsPage() {
               <PostsTable
                 posts={sortedPosts}
                 isPending={postsPending}
-                showAuthor={authorFilter === "all"}
+                showAuthor={!selectedAuthorId}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
               />
             </TabsContent>
