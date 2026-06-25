@@ -97,6 +97,24 @@ export function useDeleteAuthor() {
   })
 }
 
+export type SyncConfigItem = {
+  platform: "instagram" | "tiktok" | "youtube" | "x"
+  mode: "full" | "count" | "range"
+  count?: number
+  from?: string
+  to?: string
+}
+
+export function useSaveSyncConfigs() {
+  return useMutation({
+    mutationFn: ({ id, configs }: { id: string; configs: SyncConfigItem[] }) =>
+      apiFetch(`/sync/authors/${id}/sync-config`, {
+        method: "PUT",
+        body: JSON.stringify({ configs }),
+      }),
+  })
+}
+
 export function useExtractProfile() {
   return useMutation({
     mutationFn: ({ id, platform }: { id: string; platform: PlatformKey }) =>

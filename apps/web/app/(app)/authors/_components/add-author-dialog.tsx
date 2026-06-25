@@ -32,10 +32,12 @@ import {
   platformsToSync,
   useCreateAuthor,
   useExtractProfile,
+  useSaveSyncConfigs,
   useUpdateAuthor,
   type Author,
   type PlatformKey,
   type SocialEntry,
+  type SyncConfigItem,
 } from "@/lib/authors"
 import { useQueryClient } from "@tanstack/react-query"
 
@@ -177,6 +179,7 @@ export function AddAuthorDialog({ author, open: controlledOpen, onOpenChange }: 
   const createMutation = useCreateAuthor()
   const updateMutation = useUpdateAuthor()
   const extractProfile = useExtractProfile()
+  const saveSyncConfigs = useSaveSyncConfigs()
   const mutation = isEdit ? updateMutation : createMutation
 
   function fireExtractions(id: string, socials: Partial<Record<PlatformKey, SocialEntry>>, prevSocials?: Partial<Record<PlatformKey, SocialEntry>>) {
@@ -241,8 +244,12 @@ export function AddAuthorDialog({ author, open: controlledOpen, onOpenChange }: 
         initialSync[p]!.to   = values[`${p}SyncTo`   as `${typeof p}SyncTo`]   as string
       }
     }
-    // TODO(backend): forward initialSync to the sync trigger once the API supports per-platform scope
-    console.debug("initialSync", initialSync)
+    const configs: SyncConfigItem[] = Object.entries(initialSync).map(([platform, scope]) => {
+      const item: SyncConfigItem = { platform: platform as SyncConfigItem["platform"], mode: scope.mode }
+      if (scope.mode === "count") item.count = scope.count
+      if (scope.mode === "range") { item.from = scope.from; item.to = scope.to }
+      return item
+    })
 
     const input = { name: values.name, socials }
 
@@ -253,6 +260,12 @@ export function AddAuthorDialog({ author, open: controlledOpen, onOpenChange }: 
           onSuccess: () => {
             toast.success("Author updated")
             fireExtractions(author.id, socials, author.socials)
+            if (configs.length > 0) {
+              saveSyncConfigs.mutate(
+                { id: author.id, configs },
+                { onError: () => toast.error("Failed to save sync config") }
+              )
+            }
             setOpen(false)
           },
         }
@@ -262,6 +275,12 @@ export function AddAuthorDialog({ author, open: controlledOpen, onOpenChange }: 
         onSuccess: (data) => {
           toast.success("Author added")
           fireExtractions(data.id, socials)
+          if (configs.length > 0) {
+            saveSyncConfigs.mutate(
+              { id: data.id, configs },
+              { onError: () => toast.error("Failed to save sync config") }
+            )
+          }
           form.reset(EMPTY_DEFAULTS)
           setOpen(false)
         },
