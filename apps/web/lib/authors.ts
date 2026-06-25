@@ -14,6 +14,31 @@ export type SocialEntry = { value: string; synchronize: boolean }
 export type Author = { id: string; name: string; socials: Partial<Record<PlatformKey, SocialEntry>> }
 export type CreateAuthorInput = Omit<Author, "id">
 
+// ponytail: single constant — change here if queue processing time changes
+export const SYNC_REFRESH_DELAY_MS = 5000
+
+/** Platforms that support the extract-profile endpoint. Facebook is excluded. */
+const EXTRACTABLE_PLATFORMS = new Set<PlatformKey>(["instagram", "tiktok", "youtube", "x"])
+
+/**
+ * Returns the platforms that need extraction based on submitted vs previous socials.
+ * Skips platforms that are already synchronized with an identical handle.
+ */
+export function platformsToSync(
+  submitted: Partial<Record<PlatformKey, SocialEntry>>,
+  previous: Partial<Record<PlatformKey, SocialEntry>> = {}
+): PlatformKey[] {
+  return (Object.entries(submitted) as [PlatformKey, SocialEntry][])
+    .filter(([platform, entry]) => {
+      if (!EXTRACTABLE_PLATFORMS.has(platform)) return false
+      if (!entry.synchronize || !entry.value) return false
+      const prev = previous[platform]
+      // Skip only if already synced with the same handle
+      return !(prev?.synchronize && prev.value === entry.value)
+    })
+    .map(([platform]) => platform)
+}
+
 const authorsApi = {
   list: () => apiFetch<Author[]>("/authors"),
   create: (input: CreateAuthorInput) =>
@@ -49,5 +74,15 @@ export function useDeleteAuthor() {
   return useMutation({
     mutationFn: (id: string) => authorsApi.remove(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["authors"] }),
+  })
+}
+
+export function useExtractProfile() {
+  return useMutation({
+    mutationFn: ({ id, platform }: { id: string; platform: PlatformKey }) =>
+      apiFetch(`/sync/authors/${id}/extract-profile`, {
+        method: "POST",
+        body: JSON.stringify({ platform }),
+      }),
   })
 }

@@ -27,12 +27,16 @@ import {
 } from "@/components/ui/form"
 import {
   PLATFORMS,
+  SYNC_REFRESH_DELAY_MS,
+  platformsToSync,
   useCreateAuthor,
+  useExtractProfile,
   useUpdateAuthor,
   type Author,
   type PlatformKey,
   type SocialEntry,
 } from "@/lib/authors"
+import { useQueryClient } from "@tanstack/react-query"
 
 // ponytail: shared refinement — reused across all five platform fields
 const usernameField = z
@@ -96,9 +100,21 @@ export function AddAuthorDialog({ author, open: controlledOpen, onOpenChange }: 
   const open = controlledOpen ?? internalOpen
   const setOpen = onOpenChange ?? setInternalOpen
 
+  const qc = useQueryClient()
   const createMutation = useCreateAuthor()
   const updateMutation = useUpdateAuthor()
+  const extractProfile = useExtractProfile()
   const mutation = isEdit ? updateMutation : createMutation
+
+  function fireExtractions(id: string, socials: Partial<Record<PlatformKey, SocialEntry>>, prevSocials?: Partial<Record<PlatformKey, SocialEntry>>) {
+    const platforms = platformsToSync(socials, prevSocials)
+    if (platforms.length === 0) return
+    toast.info("Syncing profile…")
+    for (const platform of platforms) {
+      extractProfile.mutate({ id, platform })
+    }
+    setTimeout(() => qc.invalidateQueries({ queryKey: ["authors"] }), SYNC_REFRESH_DELAY_MS)
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -131,14 +147,16 @@ export function AddAuthorDialog({ author, open: controlledOpen, onOpenChange }: 
         {
           onSuccess: () => {
             toast.success("Author updated")
+            fireExtractions(author.id, socials, author.socials)
             setOpen(false)
           },
         }
       )
     } else {
       createMutation.mutate(input, {
-        onSuccess: () => {
+        onSuccess: (data) => {
           toast.success("Author added")
+          fireExtractions(data.id, socials)
           form.reset(EMPTY_DEFAULTS)
           setOpen(false)
         },
