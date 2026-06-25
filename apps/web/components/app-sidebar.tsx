@@ -13,12 +13,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { CommandIcon, LayoutDashboardIcon, Settings2Icon, UsersRoundIcon } from "lucide-react"
+import { BookmarkIcon, CommandIcon, LayoutDashboardIcon, NewspaperIcon, Settings2Icon, UsersRoundIcon } from "lucide-react"
 import Link from "next/link"
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: <LayoutDashboardIcon /> },
   { title: "Authors", url: "/authors", icon: <UsersRoundIcon /> },
+  { title: "Posts", url: "/posts", icon: <NewspaperIcon /> },
+  { title: "Swipe Files", url: "/swipe-files", icon: <BookmarkIcon /> },
   { title: "Settings", url: "/settings", icon: <Settings2Icon /> },
 ]
 
