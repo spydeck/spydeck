@@ -1,8 +1,11 @@
-import { Logger, NotFoundException } from '@nestjs/common';
+import { Inject, Logger, NotFoundException } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { AuthorsService } from '../authors/authors.service';
 import { ScrapeCreatorsService } from '../scrapecreators/scrapecreators.service';
+import { DB } from '../db/database.module';
+import type { DrizzleDB } from '../db/database.module';
+import { authorsProfiles } from '../db/schema';
 
 // Platforms with a matching ScrapeCreators profile endpoint.
 // ponytail: facebook has no ScrapeCreators profile route; reject explicitly.
@@ -23,6 +26,7 @@ export class ProfileExtractProcessor extends WorkerHost {
   constructor(
     private readonly authors: AuthorsService,
     private readonly scrapeCreators: ScrapeCreatorsService,
+    @Inject(DB) private readonly db: DrizzleDB,
   ) {
     super();
   }
@@ -54,10 +58,16 @@ export class ProfileExtractProcessor extends WorkerHost {
     const profile = await this.fetchProfile(chosen as SupportedPlatform, handle);
     this.logger.log(`profile fetched for ${author.name} @ ${chosen}/${handle}`);
 
-    // ponytail: TODO persist the extracted profile against the author.
-    // A schema field (e.g. authors.profileData jsonb) does not exist yet; add it
-    // and call authors.update(authorId, { ... }) here once it lands. For now we
-    // log + return the extracted data so callers can inspect it.
+    // ponytail: upsert on (authorId, platform) so re-extraction refreshes the row.
+    await this.db
+      .insert(authorsProfiles)
+      .values({ authorId, platform: chosen as SupportedPlatform, handle, profile })
+      .onConflictDoUpdate({
+        target: [authorsProfiles.authorId, authorsProfiles.platform],
+        set: { handle, profile, updatedAt: new Date() },
+      })
+      .execute();
+
     return { authorId, platform: chosen, handle, profile };
   }
 

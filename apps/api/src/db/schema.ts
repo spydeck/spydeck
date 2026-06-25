@@ -5,7 +5,9 @@ import {
   jsonb,
   timestamp,
   pgEnum,
+  unique,
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 // Mirrors PlatformKey from apps/web/lib/authors.ts
 export const platformEnum = pgEnum('platform', [
@@ -72,9 +74,43 @@ export const settings = pgTable('settings', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Stores ScrapeCreators profile payloads fetched by the profile-extract processor.
+// ponytail: jsonb `profile` instead of a column-per-field — each platform returns a different shape.
+export const authorsProfiles = pgTable(
+  'authors_profiles',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    authorId: uuid('author_id')
+      .notNull()
+      .references(() => authors.id, { onDelete: 'cascade' }),
+    platform: platformEnum('platform').notNull(),
+    handle: text('handle').notNull(),
+    profile: jsonb('profile').$type<unknown>(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    // ponytail: one row per (author, platform); upsert keyed on this.
+    unique('authors_profiles_author_id_platform_unique').on(table.authorId, table.platform),
+  ],
+);
+
+export const authorsRelations = relations(authors, ({ many }) => ({
+  profiles: many(authorsProfiles),
+}));
+
+export const authorsProfilesRelations = relations(authorsProfiles, ({ one }) => ({
+  author: one(authors, {
+    fields: [authorsProfiles.authorId],
+    references: [authors.id],
+  }),
+}));
+
 export type Author = typeof authors.$inferSelect;
 export type NewAuthor = typeof authors.$inferInsert;
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
 export type SwipeFile = typeof swipeFiles.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
+export type AuthorProfile = typeof authorsProfiles.$inferSelect;
+export type NewAuthorProfile = typeof authorsProfiles.$inferInsert;
