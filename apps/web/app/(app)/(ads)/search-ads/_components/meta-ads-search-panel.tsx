@@ -1,7 +1,5 @@
 "use client"
 
-// TODO: backend route /scrapecreators/ads/meta is not yet implemented
-
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { SearchIcon, MegaphoneIcon } from "lucide-react"
@@ -18,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CountrySelect } from "@/components/country-select"
 
 interface MetaAdResult {
   ad_archive_id: string
@@ -40,7 +39,7 @@ interface MetaAdResult {
 
 interface MetaAdsResponse {
   searchResults: MetaAdResult[]
-  searchResultsCount: number
+  searchResultsCount?: number
   cursor?: string
 }
 
@@ -79,7 +78,7 @@ export function MetaAdsSearchPanel() {
       if (submittedParams!.ad_type !== "ALL") params.set("ad_type", submittedParams!.ad_type)
       if (submittedParams!.start_date) params.set("start_date", submittedParams!.start_date)
       if (submittedParams!.end_date) params.set("end_date", submittedParams!.end_date)
-      return apiFetch<MetaAdsResponse>(`/scrapecreators/ads/meta?${params.toString()}`)
+      return apiFetch<MetaAdsResponse>(`/ads/meta?${params.toString()}`)
     },
     enabled: !!submittedParams,
   })
@@ -108,13 +107,12 @@ export function MetaAdsSearchPanel() {
               aria-label="Search query"
             />
           </div>
-          <Input
+          <CountrySelect
             value={form.country}
-            onChange={(e) => set("country", e.target.value)}
-            placeholder="Country (ALL)"
+            onChange={(v) => set("country", v)}
+            placeholder="Country"
+            allowEmpty
             className="w-full sm:w-36"
-            aria-label="Country code"
-            maxLength={2}
           />
           <Button type="submit" disabled={!form.query.trim()}>
             <SearchIcon data-icon="inline-start" />
@@ -208,7 +206,7 @@ export function MetaAdsSearchPanel() {
       {!isLoading && !isError && data && data.searchResults.length > 0 && (
         <>
           <p className="text-sm text-muted-foreground">
-            {data.searchResultsCount.toLocaleString()} results
+            {(data.searchResultsCount ?? data.searchResults.length).toLocaleString()} results
           </p>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.searchResults.map((ad) => {

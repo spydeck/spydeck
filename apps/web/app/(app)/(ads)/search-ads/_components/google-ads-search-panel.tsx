@@ -1,8 +1,5 @@
 "use client"
 
-// TODO: backend route /scrapecreators/ads/google/advertisers is not yet implemented
-// TODO: backend route /scrapecreators/ads/google/company-ads is not yet implemented
-
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { SearchIcon, MegaphoneIcon, ExternalLinkIcon } from "lucide-react"
@@ -11,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CountrySelect } from "@/components/country-select"
 
 interface Advertiser {
   name: string
@@ -71,7 +69,7 @@ export function GoogleAdsSearchPanel() {
       const params = new URLSearchParams()
       params.set("query", submittedQuery!.query)
       if (submittedQuery!.region) params.set("region", submittedQuery!.region)
-      return apiFetch<AdvertisersResponse>(`/scrapecreators/ads/google/advertisers?${params.toString()}`)
+      return apiFetch<AdvertisersResponse>(`/ads/google/advertisers?${params.toString()}`)
     },
     enabled: !!submittedQuery,
   })
@@ -87,7 +85,7 @@ export function GoogleAdsSearchPanel() {
       if (form.end_date) params.set("end_date", form.end_date)
       if (form.platform) params.set("platform", form.platform)
       if (form.format) params.set("format", form.format)
-      return apiFetch<GoogleAdsResponse>(`/scrapecreators/ads/google/company-ads?${params.toString()}`)
+      return apiFetch<GoogleAdsResponse>(`/ads/google/company-ads?${params.toString()}`)
     },
     enabled: !!submittedAdsParams,
   })
@@ -127,13 +125,12 @@ export function GoogleAdsSearchPanel() {
               aria-label="Advertiser name"
             />
           </div>
-          <Input
+          <CountrySelect
             value={searchForm.region}
-            onChange={(e) => setSearchForm((p) => ({ ...p, region: e.target.value }))}
-            placeholder="Region (optional)"
+            onChange={(v) => setSearchForm((p) => ({ ...p, region: v }))}
+            placeholder="Region"
+            allowEmpty
             className="w-full sm:w-36"
-            aria-label="Region"
-            maxLength={2}
           />
           <Button type="submit" disabled={!searchForm.query.trim()}>
             <SearchIcon data-icon="inline-start" />

@@ -1,7 +1,5 @@
 "use client"
 
-// TODO: backend route /scrapecreators/ads/tiktok is not yet implemented
-
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { SearchIcon, MegaphoneIcon } from "lucide-react"
@@ -18,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CountrySelect } from "@/components/country-select"
 
 interface TikTokAd {
   id: string
@@ -75,7 +74,7 @@ export function TikTokAdsSearchPanel() {
       if (submittedParams!.period) params.set("period", submittedParams!.period)
       if (submittedParams!.order_by) params.set("order_by", submittedParams!.order_by)
       if (submittedParams!.ad_format !== "ALL") params.set("ad_format", submittedParams!.ad_format)
-      return apiFetch<TikTokAdsResponse>(`/scrapecreators/ads/tiktok?${params.toString()}`)
+      return apiFetch<TikTokAdsResponse>(`/ads/tiktok?${params.toString()}`)
     },
     enabled: !!submittedParams,
   })
@@ -103,13 +102,12 @@ export function TikTokAdsSearchPanel() {
               aria-label="Search query"
             />
           </div>
-          <Input
+          <CountrySelect
             value={form.region}
-            onChange={(e) => set("region", e.target.value)}
-            placeholder="Region (US)"
+            onChange={(v) => set("region", v)}
+            placeholder="Region"
+            allowEmpty
             className="w-full sm:w-32"
-            aria-label="Region code"
-            maxLength={2}
           />
           <Button type="submit">
             <SearchIcon data-icon="inline-start" />

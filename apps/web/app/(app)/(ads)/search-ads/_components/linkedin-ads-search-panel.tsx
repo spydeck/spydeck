@@ -1,7 +1,5 @@
 "use client"
 
-// TODO: backend route /scrapecreators/ads/linkedin is not yet implemented
-
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { SearchIcon, MegaphoneIcon } from "lucide-react"
@@ -24,7 +22,7 @@ interface LinkedInAd {
   image?: string
   startDate?: string
   endDate?: string
-  totalImpressions?: number
+  totalImpressions?: number | string
 }
 
 interface LinkedInAdsResponse {
@@ -70,7 +68,7 @@ export function LinkedInAdsSearchPanel() {
       if (submittedParams!.countries) params.set("countries", submittedParams!.countries)
       if (submittedParams!.startDate) params.set("startDate", submittedParams!.startDate)
       if (submittedParams!.endDate) params.set("endDate", submittedParams!.endDate)
-      return apiFetch<LinkedInAdsResponse>(`/scrapecreators/ads/linkedin?${params.toString()}`)
+      return apiFetch<LinkedInAdsResponse>(`/ads/linkedin?${params.toString()}`)
     },
     enabled: !!submittedParams,
   })
@@ -214,11 +212,13 @@ export function LinkedInAdsSearchPanel() {
                 <span>
                   {ad.startDate ?? "–"} – {ad.endDate ?? "–"}
                 </span>
-                {ad.totalImpressions !== undefined && (
+                {ad.totalImpressions !== undefined && ad.totalImpressions !== null && (
                   <span className="flex items-center gap-1">
                     <span>Imp.</span>
                     <span className="font-medium text-foreground">
-                      {formatCompact(ad.totalImpressions)}
+                      {typeof ad.totalImpressions === "number"
+                        ? formatCompact(ad.totalImpressions)
+                        : ad.totalImpressions}
                     </span>
                   </span>
                 )}
