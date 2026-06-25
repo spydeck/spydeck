@@ -1,11 +1,12 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DB } from '../db/database.module';
 import type { DrizzleDB } from '../db/database.module';
 import { settings } from '../db/schema';
 
 @Injectable()
 export class SettingsService {
+  private readonly logger = new Logger(SettingsService.name);
+
   constructor(@Inject(DB) private readonly db: DrizzleDB) {}
 
   async findAll() {
@@ -15,14 +16,23 @@ export class SettingsService {
   }
 
   async upsert(key: string, value: string) {
-    const [row] = await this.db
-      .insert(settings)
-      .values({ key, value })
-      .onConflictDoUpdate({
-        target: settings.key,
-        set: { value, updatedAt: new Date() },
-      })
-      .returning();
-    return row;
+    try {
+      const [row] = await this.db
+        .insert(settings)
+        .values({ key, value })
+        .onConflictDoUpdate({
+          target: settings.key,
+          set: { value, updatedAt: new Date() },
+        })
+        .returning();
+      this.logger.log(`upserted setting: ${key}`);
+      return row;
+    } catch (err) {
+      this.logger.error(
+        `failed to upsert setting: ${key}`,
+        (err as Error).stack,
+      );
+      throw err;
+    }
   }
 }

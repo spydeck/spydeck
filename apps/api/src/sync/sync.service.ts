@@ -11,16 +11,32 @@ export class SyncService {
 
   health() {
     this.logger.debug('sync health check');
-    return { status: 'ok', service: 'sync', timestamp: new Date().toISOString() };
+    return {
+      status: 'ok',
+      service: 'sync',
+      timestamp: new Date().toISOString(),
+    };
   }
 
-  async enqueueProfileExtract(payload: ProfileExtractPayload): Promise<{ jobId: string }> {
-    const job = await this.queue.add('profile-extract', payload, {
-      attempts: 3,
-      backoff: { type: 'exponential', delay: 2000 },
-    });
-    const jobId = job.id ?? '';
-    this.logger.log(`enqueued profile-extract job ${jobId} for author ${payload.authorId}`);
-    return { jobId };
+  async enqueueProfileExtract(
+    payload: ProfileExtractPayload,
+  ): Promise<{ jobId: string }> {
+    try {
+      const job = await this.queue.add('profile-extract', payload, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+      });
+      const jobId = job.id ?? '';
+      this.logger.log(
+        `enqueued profile-extract job ${jobId} for author ${payload.authorId}`,
+      );
+      return { jobId };
+    } catch (err) {
+      this.logger.error(
+        `failed to enqueue profile-extract for author ${payload.authorId}`,
+        (err as Error).stack,
+      );
+      throw err;
+    }
   }
 }

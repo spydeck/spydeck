@@ -1,13 +1,18 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SettingsService } from '../settings/settings.service';
 
 const BASE_URL = 'https://api.scrapecreators.com';
 
-export type Params = Record<string, string | number | boolean | undefined | null>;
+export type Params = Record<
+  string,
+  string | number | boolean | undefined | null
+>;
 
 @Injectable()
 export class ScrapeCreatorsClient {
+  private readonly logger = new Logger(ScrapeCreatorsClient.name);
+
   constructor(
     private readonly config: ConfigService,
     private readonly settings: SettingsService,
@@ -34,11 +39,24 @@ export class ScrapeCreatorsClient {
       if (v !== undefined && v !== null) qs.set(k, String(v));
     }
     const url = `${BASE_URL}${path}${qs.size ? '?' + qs.toString() : ''}`;
-    const res = await fetch(url, { headers: { 'x-api-key': apiKey } });
-    if (!res.ok) {
-      const body = await res.text().catch(() => res.statusText);
-      throw new HttpException(`ScrapeCreators: ${body}`, res.status);
+    this.logger.log(`GET ${path}`);
+    try {
+      const res = await fetch(url, { headers: { 'x-api-key': apiKey } });
+      if (!res.ok) {
+        const body = await res.text().catch(() => res.statusText);
+        this.logger.warn(
+          `ScrapeCreators ${path} responded ${res.status}: ${body}`,
+        );
+        throw new HttpException(`ScrapeCreators: ${body}`, res.status);
+      }
+      return res.json() as Promise<T>;
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      this.logger.error(
+        `ScrapeCreators request failed: ${path}`,
+        (err as Error).stack,
+      );
+      throw err;
     }
-    return res.json() as Promise<T>;
   }
 }
