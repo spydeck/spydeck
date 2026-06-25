@@ -6,6 +6,7 @@ import { type ColumnDef } from "@tanstack/react-table"
 import { Heart, MessageCircle, Eye } from "lucide-react"
 
 import { DataTable } from "@/components/ui/data-table"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PLATFORMS, useAuthors } from "@/lib/authors"
 import type { Post } from "@/lib/posts"
 import { formatDate } from "./post-helpers"
@@ -17,9 +18,21 @@ interface PostsTableProps {
   showAuthor: boolean
   renderAction?: (post: Post) => React.ReactNode
   onSelectPost?: (post: Post) => void
+  selectedIds?: Set<string>
+  onToggleSelect?: (postId: string) => void
+  onSelectAll?: (postIds: string[], checked: boolean) => void
 }
 
-export function PostsTable({ posts, isPending, showAuthor, renderAction, onSelectPost }: PostsTableProps) {
+export function PostsTable({
+  posts,
+  isPending,
+  showAuthor,
+  renderAction,
+  onSelectPost,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll,
+}: PostsTableProps) {
   const { data: authors } = useAuthors()
 
   const authorName = (id: string) =>
@@ -28,7 +41,37 @@ export function PostsTable({ posts, isPending, showAuthor, renderAction, onSelec
   const platformLabel = (key: string) =>
     PLATFORMS.find((p) => p.key === key)?.label ?? key
 
+  const selectionEnabled = !!onToggleSelect
+  const allSelected = posts.length > 0 && posts.every((p) => selectedIds?.has(p.id))
+  const someSelected = posts.some((p) => selectedIds?.has(p.id))
+
   const columns: ColumnDef<Post>[] = [
+    ...(selectionEnabled
+      ? ([
+          {
+            id: "select",
+            enableSorting: false,
+            header: () => (
+              <Checkbox
+                checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                aria-label="Select all posts"
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={(checked) =>
+                  onSelectAll?.(posts.map((p) => p.id), checked === true)
+                }
+              />
+            ),
+            cell: ({ row }) => (
+              <Checkbox
+                checked={selectedIds?.has(row.original.id) ?? false}
+                aria-label="Select post"
+                onClick={(e) => e.stopPropagation()}
+                onCheckedChange={() => onToggleSelect?.(row.original.id)}
+              />
+            ),
+          },
+        ] satisfies ColumnDef<Post>[])
+      : []),
     ...(showAuthor
       ? ([
           {

@@ -1,30 +1,35 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { SiteHeader } from "@/components/site-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { useAuthors } from "@/lib/authors"
 import { useSwipeFiles } from "@/lib/swipe-files"
 import type { Post } from "@/lib/posts"
 import { PostsTable } from "../posts/_components/posts-table"
 import { PostsCards } from "../posts/_components/posts-cards"
 import { SwipeBookmarkButton } from "../posts/_components/swipe-bookmark-button"
 import { PostDetailSidebar } from "@/components/post-detail-sidebar"
+import {
+  AuthorFilter,
+  SortSelect,
+  applyPostFilters,
+  parseAuthorFilter,
+  type SortKey,
+} from "../posts/_components/post-filters"
 
 export default function SwipeFilesPage() {
   const [authorFilter, setAuthorFilter] = useState<string>("all")
+  const [sortBy, setSortBy] = useState<SortKey>("date_desc")
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
-  const { data: authors } = useAuthors()
-  const { data: posts, isPending: postsPending } = useSwipeFiles(
-    authorFilter === "all" ? undefined : authorFilter
+
+  const { authorId: selectedAuthorId, platform: selectedPlatform } =
+    parseAuthorFilter(authorFilter)
+  const { data: posts, isPending: postsPending } = useSwipeFiles(selectedAuthorId)
+
+  const sortedPosts = useMemo(
+    () => applyPostFilters(posts, sortBy, selectedPlatform),
+    [posts, sortBy, selectedPlatform],
   )
 
   const isEmpty = !postsPending && (!posts || posts.length === 0)
@@ -41,19 +46,10 @@ export default function SwipeFilesPage() {
               Posts you have saved for inspiration and reference.
             </p>
           </div>
-          <Select value={authorFilter} onValueChange={setAuthorFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="All authors" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All authors</SelectItem>
-              {authors?.map((author) => (
-                <SelectItem key={author.id} value={author.id}>
-                  {author.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <SortSelect value={sortBy} onChange={setSortBy} />
+            <AuthorFilter value={authorFilter} onChange={setAuthorFilter} />
+          </div>
         </div>
 
         {isEmpty ? (
@@ -71,16 +67,16 @@ export default function SwipeFilesPage() {
             </TabsList>
             <TabsContent value="table" className="mt-4">
               <PostsTable
-                posts={posts ?? []}
+                posts={sortedPosts}
                 isPending={postsPending}
-                showAuthor={authorFilter === "all"}
+                showAuthor={!selectedAuthorId}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
                 onSelectPost={setSelectedPost}
               />
             </TabsContent>
             <TabsContent value="cards" className="mt-4">
               <PostsCards
-                posts={posts ?? []}
+                posts={sortedPosts}
                 isPending={postsPending}
                 renderAction={(post) => <SwipeBookmarkButton postId={post.id} />}
                 onSelectPost={setSelectedPost}

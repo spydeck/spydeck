@@ -20,6 +20,24 @@ export function useSwipeFileIds() {
   })
 }
 
+// Bulk add — fans out one POST per post (no bulk endpoint). Callers should
+// pass only ids that aren't already saved to avoid the unique-constraint error.
+export function useAddSwipeFiles() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (postIds: string[]) =>
+      Promise.all(
+        postIds.map((postId) =>
+          apiFetch<void>("/swipe", { method: "POST", body: JSON.stringify({ postId }) }),
+        ),
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["swipeFileIds"] })
+      queryClient.invalidateQueries({ queryKey: ["swipeFiles"] })
+    },
+  })
+}
+
 export function useToggleSwipeFile() {
   const queryClient = useQueryClient()
   return useMutation({
