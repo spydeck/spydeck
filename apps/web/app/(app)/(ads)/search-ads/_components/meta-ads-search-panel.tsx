@@ -211,8 +211,26 @@ export function MetaAdsSearchPanel() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {data.searchResults.map((ad) => {
               const bodyText = ad.snapshot.body?.text ?? ""
+              const video = ad.snapshot.videos?.[0]
+              const imageUrl = ad.snapshot.images?.[0]?.original_image_url
               return (
-                <Card key={ad.ad_archive_id} className="rounded-xl">
+                <Card key={ad.ad_archive_id} className="rounded-xl overflow-hidden">
+                  {video?.video_hd_url ? (
+                    <video
+                      src={video.video_hd_url}
+                      poster={video.video_preview_image_url}
+                      controls
+                      preload="metadata"
+                      className="h-48 w-full bg-muted object-cover"
+                    />
+                  ) : imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={imageUrl}
+                      alt={ad.snapshot.title ?? ad.page_name}
+                      className="h-48 w-full bg-muted object-cover"
+                    />
+                  ) : null}
                   <CardHeader>
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base">
