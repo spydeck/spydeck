@@ -85,12 +85,23 @@ export function PostsCards({ posts, isPending, renderAction }: PostsCardsProps) 
                 rel="noopener noreferrer"
                 className="relative block w-full aspect-[4/3] bg-muted transition-opacity hover:opacity-95"
               >
-                <Image
-                  src={post.mediaUrl}
-                  alt=""
-                  fill
-                  className="object-contain"
-                />
+                {post.mediaUrl.startsWith("data:") ? (
+                  // Embedded base64 (e.g. transcoded TikTok HEIC covers) — render
+                  // directly; next/image's optimizer is for remote URLs.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={post.mediaUrl}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-contain"
+                  />
+                ) : (
+                  <Image
+                    src={post.mediaUrl}
+                    alt=""
+                    fill
+                    className="object-contain"
+                  />
+                )}
                 <span className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-md">
                   {dateShort}
                 </span>
