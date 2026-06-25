@@ -11,8 +11,28 @@ export const PLATFORMS = [
 
 export type PlatformKey = (typeof PLATFORMS)[number]["key"]
 export type SocialEntry = { value: string; synchronize: boolean }
-export type Author = { id: string; name: string; socials: Partial<Record<PlatformKey, SocialEntry>> }
-export type CreateAuthorInput = Omit<Author, "id">
+
+export type AuthorProfile = {
+  platform: "instagram" | "tiktok" | "youtube" | "x"
+  handle: string | null
+  displayName: string | null
+  avatarUrl: string | null
+  bio: string | null
+  externalUrl: string | null
+  verified: boolean | null
+  followerCount: number | null
+  followingCount: number | null
+  updatedAt: string
+}
+
+export type Author = {
+  id: string
+  name: string
+  socials: Partial<Record<PlatformKey, SocialEntry>>
+  profiles: AuthorProfile[]
+}
+
+export type CreateAuthorInput = Omit<Author, "id" | "profiles">
 
 // ponytail: single constant — change here if queue processing time changes
 export const SYNC_REFRESH_DELAY_MS = 5000

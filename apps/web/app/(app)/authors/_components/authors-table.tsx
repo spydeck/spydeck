@@ -5,7 +5,9 @@ import { type ColumnDef } from "@tanstack/react-table"
 import { Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { BadgeCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DataTable } from "@/components/ui/data-table"
 import {
   AlertDialog,
@@ -17,9 +19,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { PLATFORMS, useAuthors, useDeleteAuthor, type Author } from "@/lib/authors"
+import { PLATFORMS, useAuthors, useDeleteAuthor, type Author, type AuthorProfile } from "@/lib/authors"
 import { PlatformIcon } from "@/components/platform-icon"
 import { AddAuthorDialog } from "./add-author-dialog"
+
+function profileFor(author: Author, platform: string): AuthorProfile | undefined {
+  return author.profiles?.find((p) => p.platform === platform)
+}
+
+const compactFormatter = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 })
+function formatCount(n: number | null | undefined): string | null {
+  return n != null ? compactFormatter.format(n) : null
+}
 
 function getAuthorColumns({
   onEdit,
@@ -46,9 +57,29 @@ function getAuthorColumns({
           </span>
         ),
         accessorFn: (row) => row.socials[p.key]?.value ?? null,
-        cell: ({ getValue }) => {
-          const v = getValue<string | null>()
-          return v ?? <span className="text-muted-foreground">—</span>
+        cell: ({ row, getValue }) => {
+          const handle = getValue<string | null>()
+          // ponytail: facebook has no extract-profile endpoint, skip profile lookup
+          const profile = p.key !== "facebook" ? profileFor(row.original, p.key) : undefined
+          if (!profile) return handle ?? <span className="text-muted-foreground">—</span>
+          const label = profile.displayName ?? profile.handle ?? handle
+          const fallback = (label ?? "?")[0]!.toUpperCase()
+          const count = formatCount(profile.followerCount)
+          return (
+            <div className="flex items-center gap-1.5">
+              <Avatar className="size-6 shrink-0">
+                <AvatarImage src={profile.avatarUrl ?? undefined} alt={label ?? undefined} />
+                <AvatarFallback className="text-[10px]">{fallback}</AvatarFallback>
+              </Avatar>
+              <span className="truncate text-sm">{label}</span>
+              {profile.verified && (
+                <BadgeCheck className="size-3.5 shrink-0 text-blue-500" aria-label="Verified" />
+              )}
+              {count && (
+                <span className="ml-auto shrink-0 text-xs text-muted-foreground">{count}</span>
+              )}
+            </div>
+          )
         },
       })
     ),
