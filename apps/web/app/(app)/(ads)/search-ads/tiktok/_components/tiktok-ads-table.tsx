@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/ui/data-table"
 import { AdThumbnail } from "../../_components/ad-thumbnail"
 import { SaveAdButton } from "../../_components/save-ad-button"
+import { ViewDetailsButton } from "../../_components/view-details-button"
 import { formatCompact, normalizeTikTokAd, type TikTokAd } from "./tiktok-ad"
 
 function formatDuration(seconds: number): string {
@@ -23,11 +24,15 @@ export function TikTokAdsTable({
   selectedIds,
   onToggleSelect,
   onSelectAll,
+  onViewDetails,
+  persistedIds,
 }: {
   ads: TikTokAd[]
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onSelectAll: (ids: string[], checked: boolean) => void
+  onViewDetails?: (externalId: string) => void
+  persistedIds?: Set<string>
 }) {
   const columns = useMemo<ColumnDef<TikTokAd>[]>(() => {
     const allSelected = ads.length > 0 && ads.every((a) => selectedIds.has(a.id))
@@ -157,12 +162,21 @@ export function TikTokAdsTable({
         id: "actions",
         enableSorting: false,
         enableResizing: false,
-        size: 56,
+        size: 88,
         header: () => null,
-        cell: ({ row }) => <SaveAdButton ad={normalizeTikTokAd(row.original)} />,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <ViewDetailsButton
+              externalId={row.original.id}
+              persisted={persistedIds?.has(row.original.id)}
+              onView={onViewDetails}
+            />
+            <SaveAdButton ad={normalizeTikTokAd(row.original)} />
+          </div>
+        ),
       },
     ]
-  }, [ads, selectedIds, onToggleSelect, onSelectAll])
+  }, [ads, selectedIds, onToggleSelect, onSelectAll, onViewDetails, persistedIds])
 
   return (
     <div className="overflow-x-auto rounded-xl border">

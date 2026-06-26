@@ -9,6 +9,7 @@ import { DataTable } from "@/components/ui/data-table"
 import { AdThumbnail } from "../../_components/ad-thumbnail"
 import { MetaPlatformIcons } from "../../_components/meta-platform-icons"
 import { SaveAdButton } from "../../_components/save-ad-button"
+import { ViewDetailsButton } from "../../_components/view-details-button"
 import { dateSortValue, formatDateLabel } from "../../_components/date-utils"
 import { normalizeMetaAd, type MetaAdResult } from "./meta-ad"
 
@@ -34,11 +35,15 @@ export function MetaAdsTable({
   selectedIds,
   onToggleSelect,
   onSelectAll,
+  onViewDetails,
+  persistedIds,
 }: {
   ads: MetaAdResult[]
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onSelectAll: (ids: string[], checked: boolean) => void
+  onViewDetails?: (externalId: string) => void
+  persistedIds?: Set<string>
 }) {
   const columns = useMemo<ColumnDef<MetaAdResult>[]>(() => {
     const allSelected =
@@ -162,12 +167,21 @@ export function MetaAdsTable({
         id: "actions",
         enableSorting: false,
         enableResizing: false,
-        size: 56,
+        size: 88,
         header: () => null,
-        cell: ({ row }) => <SaveAdButton ad={normalizeMetaAd(row.original)} />,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <ViewDetailsButton
+              externalId={row.original.ad_archive_id}
+              persisted={persistedIds?.has(row.original.ad_archive_id)}
+              onView={onViewDetails}
+            />
+            <SaveAdButton ad={normalizeMetaAd(row.original)} />
+          </div>
+        ),
       },
     ]
-  }, [ads, selectedIds, onToggleSelect, onSelectAll])
+  }, [ads, selectedIds, onToggleSelect, onSelectAll, onViewDetails, persistedIds])
 
   return (
     <div className="overflow-x-auto rounded-xl border">

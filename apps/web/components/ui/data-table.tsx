@@ -28,6 +28,8 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   emptyMessage?: React.ReactNode
   onRowClick?: (row: TData) => void
+  /** Per-row class names, e.g. to highlight rows in a particular state. */
+  rowClassName?: (row: TData) => string | undefined
   /** Enable draggable separators between columns to resize them. */
   enableColumnResizing?: boolean
 }
@@ -38,6 +40,7 @@ export function DataTable<TData, TValue>({
   isLoading,
   emptyMessage = "No results.",
   onRowClick,
+  rowClassName,
   enableColumnResizing,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -132,7 +135,10 @@ export function DataTable<TData, TValue>({
             <TableRow
               key={row.id}
               onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-              className={onRowClick ? "cursor-pointer" : undefined}
+              className={cn(
+                onRowClick && "cursor-pointer",
+                rowClassName?.(row.original)
+              )}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell

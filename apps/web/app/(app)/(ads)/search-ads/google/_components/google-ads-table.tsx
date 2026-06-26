@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/ui/data-table"
 import { AdThumbnail } from "../../_components/ad-thumbnail"
 import { SaveAdButton } from "../../_components/save-ad-button"
+import { ViewDetailsButton } from "../../_components/view-details-button"
 import { dateSortValue, formatDateLabel } from "../../_components/date-utils"
 import { normalizeGoogleAd, type GoogleAd } from "./google-ad"
 
@@ -15,11 +16,15 @@ export function GoogleAdsTable({
   selectedIds,
   onToggleSelect,
   onSelectAll,
+  onViewDetails,
+  persistedIds,
 }: {
   ads: GoogleAd[]
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onSelectAll: (ids: string[], checked: boolean) => void
+  onViewDetails?: (externalId: string) => void
+  persistedIds?: Set<string>
 }) {
   const columns = useMemo<ColumnDef<GoogleAd>[]>(() => {
     const allSelected =
@@ -134,12 +139,21 @@ export function GoogleAdsTable({
         id: "actions",
         enableSorting: false,
         enableResizing: false,
-        size: 56,
+        size: 88,
         header: () => null,
-        cell: ({ row }) => <SaveAdButton ad={normalizeGoogleAd(row.original)} />,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <ViewDetailsButton
+              externalId={row.original.creativeId}
+              persisted={persistedIds?.has(row.original.creativeId)}
+              onView={onViewDetails}
+            />
+            <SaveAdButton ad={normalizeGoogleAd(row.original)} />
+          </div>
+        ),
       },
     ]
-  }, [ads, selectedIds, onToggleSelect, onSelectAll])
+  }, [ads, selectedIds, onToggleSelect, onSelectAll, onViewDetails, persistedIds])
 
   return (
     <div className="overflow-x-auto rounded-xl border">

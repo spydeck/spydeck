@@ -1,11 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { BookmarkIcon, XIcon } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { BookmarkIcon, FileSearchIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
+import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSavedAds } from "../../swipe-ads/_components/use-saved-ads"
+import { AdDetailSidebar } from "./ad-detail-sidebar"
 import { GoogleAdsTable } from "../google/_components/google-ads-table"
 import type { GoogleAd } from "../google/_components/google-ad"
 import { LinkedInAdsTable } from "../linkedin/_components/linkedin-ads-table"
@@ -15,12 +18,19 @@ import type { MetaAdResult } from "../meta/_components/meta-ad"
 import { TikTokAdsTable } from "../tiktok/_components/tiktok-ads-table"
 import type { TikTokAd } from "../tiktok/_components/tiktok-ad"
 import { AdCard } from "./ad-card"
-import { toAdResult, type NormalizedAd } from "./normalized-ad"
+import {
+  toAdDetailRequest,
+  toAdResult,
+  type AdDetailRequest,
+  type NormalizedAd,
+} from "./normalized-ad"
 
 type PlatformTableProps = {
   selectedIds: Set<string>
   onToggleSelect: (id: string) => void
   onSelectAll: (ids: string[], checked: boolean) => void
+  onViewDetails: (externalId: string) => void
+  persistedIds: Set<string>
 }
 
 type AdsResultsProps<TRaw> = {
@@ -47,7 +57,28 @@ export function AdsResults<TRaw>({
   onLoadMore,
 }: AdsResultsProps<TRaw>) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [fetchingDetails, setFetchingDetails] = useState(false)
+  const [detailAd, setDetailAd] = useState<NormalizedAd | null>(null)
   const { saveAd } = useSavedAds()
+
+  // Which of the shown ads already have a persisted detail (so rows are marked).
+  const apiPlatform = platform.toLowerCase()
+  const externalIds = useMemo(() => ads.map((ad) => ad.id), [ads])
+  const { data: persisted } = useQuery({
+    queryKey: ["ad-persisted", apiPlatform, externalIds],
+    queryFn: () =>
+      apiFetch<string[]>("/sync/ad-details/lookup", {
+        method: "POST",
+        body: JSON.stringify({ platform: apiPlatform, externalIds }),
+      }),
+    enabled: externalIds.length > 0,
+  })
+  const persistedIds = useMemo(() => new Set(persisted ?? []), [persisted])
+
+  function handleViewDetails(externalId: string) {
+    const ad = ads.find((a) => a.id === externalId)
+    if (ad) setDetailAd(ad)
+  }
 
   const resultsLabel =
     total != null
@@ -90,10 +121,38 @@ export function AdsResults<TRaw>({
     setSelectedIds(new Set())
   }
 
+  async function handleFetchDetails() {
+    const requests = ads
+      .filter((ad) => selectedIds.has(ad.id))
+      .map(toAdDetailRequest)
+      .filter((r): r is AdDetailRequest => r !== null)
+    if (requests.length === 0) {
+      toast.error("Selected ads don't support detail fetching")
+      return
+    }
+    setFetchingDetails(true)
+    try {
+      await apiFetch("/sync/ad-details", {
+        method: "POST",
+        body: JSON.stringify({ ads: requests }),
+      })
+      toast.success(
+        `Queued detail fetch for ${requests.length} ad${requests.length > 1 ? "s" : ""}`
+      )
+      setSelectedIds(new Set())
+    } catch {
+      toast.error("Failed to queue ad detail fetch")
+    } finally {
+      setFetchingDetails(false)
+    }
+  }
+
   const tableProps: PlatformTableProps = {
     selectedIds,
     onToggleSelect: toggleSelect,
     onSelectAll: toggleSelectAll,
+    onViewDetails: handleViewDetails,
+    persistedIds,
   }
 
   return (
@@ -160,9 +219,20 @@ export function AdsResults<TRaw>({
               <BookmarkIcon data-icon="inline-start" />
               Add to Swipe Ads
             </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={fetchingDetails}
+              onClick={handleFetchDetails}
+            >
+              <FileSearchIcon data-icon="inline-start" />
+              {fetchingDetails ? "Fetching…" : "Fetch details"}
+            </Button>
           </div>
         </div>
       )}
+
+      <AdDetailSidebar ad={detailAd} onClose={() => setDetailAd(null)} />
     </div>
   )
 }

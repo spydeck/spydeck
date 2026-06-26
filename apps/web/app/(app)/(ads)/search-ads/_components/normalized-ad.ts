@@ -25,6 +25,38 @@ export interface NormalizedAd {
   spend?: number
 }
 
+// Request shape for the backend ad-detail extractor (POST /sync/ad-details).
+export interface AdDetailRequest {
+  platform: 'linkedin' | 'meta' | 'tiktok' | 'google'
+  externalId: string
+  url?: string
+  adId?: string
+}
+
+// Maps an ad to its detail-fetch request. LinkedIn/Google fetch by URL, Meta/TikTok
+// by id. Returns null for ads with no usable detail endpoint (e.g. YouTube, or a
+// Google ad missing its transparency URL).
+export function toAdDetailRequest(ad: NormalizedAd): AdDetailRequest | null {
+  switch (ad.platform) {
+    case "LinkedIn":
+      return {
+        platform: "linkedin",
+        externalId: ad.id,
+        url: `https://www.linkedin.com/ad-library/detail/${ad.id}`,
+      }
+    case "Google":
+      return ad.destinationUrl
+        ? { platform: "google", externalId: ad.id, url: ad.destinationUrl }
+        : null
+    case "Meta":
+      return { platform: "meta", externalId: ad.id, adId: ad.id }
+    case "TikTok":
+      return { platform: "tiktok", externalId: ad.id, adId: ad.id }
+    default:
+      return null
+  }
+}
+
 export function toAdResult(ad: NormalizedAd): AdResult {
   return {
     id: ad.id,
