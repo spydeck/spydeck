@@ -11,6 +11,7 @@ import {
 } from "@tanstack/react-table"
 import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react"
 
+import { cn } from "@/lib/utils"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -27,6 +28,8 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   emptyMessage?: React.ReactNode
   onRowClick?: (row: TData) => void
+  /** Enable draggable separators between columns to resize them. */
+  enableColumnResizing?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -35,6 +38,7 @@ export function DataTable<TData, TValue>({
   isLoading,
   emptyMessage = "No results.",
   onRowClick,
+  enableColumnResizing,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])
 
@@ -45,12 +49,20 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    enableColumnResizing,
+    columnResizeMode: "onChange",
   })
 
   const colCount = columns.length
 
   return (
-    <Table>
+    <Table
+      style={
+        enableColumnResizing
+          ? { width: "100%", minWidth: table.getTotalSize() }
+          : undefined
+      }
+    >
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
@@ -61,7 +73,13 @@ export function DataTable<TData, TValue>({
                 <TableHead
                   key={header.id}
                   onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
-                  className={canSort ? "cursor-pointer select-none" : undefined}
+                  className={cn(
+                    "relative",
+                    canSort && "cursor-pointer select-none"
+                  )}
+                  style={
+                    enableColumnResizing ? { width: header.getSize() } : undefined
+                  }
                 >
                   {header.isPlaceholder ? null : (
                     <span className="inline-flex items-center gap-1">
@@ -76,6 +94,17 @@ export function DataTable<TData, TValue>({
                         )
                       )}
                     </span>
+                  )}
+                  {enableColumnResizing && header.column.getCanResize() && (
+                    <div
+                      onMouseDown={header.getResizeHandler()}
+                      onTouchStart={header.getResizeHandler()}
+                      onClick={(e) => e.stopPropagation()}
+                      className={cn(
+                        "absolute top-0 right-0 h-full w-1.5 cursor-col-resize touch-none select-none bg-border opacity-0 transition-opacity hover:opacity-100",
+                        header.column.getIsResizing() && "bg-primary opacity-100"
+                      )}
+                    />
                   )}
                 </TableHead>
               )
@@ -106,7 +135,14 @@ export function DataTable<TData, TValue>({
               className={onRowClick ? "cursor-pointer" : undefined}
             >
               {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
+                <TableCell
+                  key={cell.id}
+                  style={
+                    enableColumnResizing
+                      ? { width: cell.column.getSize() }
+                      : undefined
+                  }
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </TableCell>
               ))}

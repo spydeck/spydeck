@@ -80,7 +80,7 @@ export function LinkedInAdsPanel() {
       {!isLoading && !isError && data && ads.length > 0 && (
         <AdsResults
           ads={ads}
-          totalLabel={totalAds != null ? `${totalAds.toLocaleString()} results` : undefined}
+          total={totalAds}
           resetKey={submittedParams}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}

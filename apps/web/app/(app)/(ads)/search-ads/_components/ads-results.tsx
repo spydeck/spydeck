@@ -12,14 +12,15 @@ import { toAdResult, type NormalizedAd } from "./normalized-ad"
 
 export function AdsResults({
   ads,
-  totalLabel,
+  total,
   resetKey,
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
 }: {
   ads: NormalizedAd[]
-  totalLabel?: string | null
+  /** Total available results across all pages (when the API reports it). */
+  total?: number
   /** When this value changes, the current selection is cleared (e.g. a new search). */
   resetKey?: unknown
   hasNextPage?: boolean
@@ -28,6 +29,13 @@ export function AdsResults({
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { saveAd } = useSavedAds()
+
+  const resultsLabel =
+    total != null
+      ? `Displaying ${ads.length.toLocaleString()} results from ${total.toLocaleString()} results`
+      : ads.length > 0
+        ? `Displaying ${ads.length.toLocaleString()} results`
+        : null
 
   useEffect(() => {
     setSelectedIds(new Set())
@@ -65,8 +73,6 @@ export function AdsResults({
 
   return (
     <div className="flex flex-col gap-4">
-      {totalLabel && <p className="text-sm text-muted-foreground">{totalLabel}</p>}
-
       <Tabs defaultValue="cards">
         <TabsList>
           <TabsTrigger value="table">Table</TabsTrigger>
@@ -89,15 +95,20 @@ export function AdsResults({
         </TabsContent>
       </Tabs>
 
-      {hasNextPage && onLoadMore && (
-        <div className="flex justify-center pt-2">
-          <Button
-            variant="outline"
-            onClick={onLoadMore}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? "Loading…" : "Load more ads"}
-          </Button>
+      {(resultsLabel || (hasNextPage && onLoadMore)) && (
+        <div className="flex items-center justify-center gap-4 pt-2">
+          {resultsLabel && (
+            <p className="text-sm text-muted-foreground">{resultsLabel}</p>
+          )}
+          {hasNextPage && onLoadMore && (
+            <Button
+              variant="outline"
+              onClick={onLoadMore}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? "Loading…" : "Load more ads"}
+            </Button>
+          )}
         </div>
       )}
 

@@ -53,6 +53,8 @@ export function AdsTable({
       {
         id: "select",
         enableSorting: false,
+        enableResizing: false,
+        size: 44,
         header: () => (
           <Checkbox
             checked={allSelected ? true : someSelected ? "indeterminate" : false}
@@ -73,6 +75,8 @@ export function AdsTable({
       {
         id: "advertiser",
         accessorFn: (ad) => ad.advertiser,
+        size: 200,
+        minSize: 120,
         header: "Advertiser",
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
@@ -88,6 +92,8 @@ export function AdsTable({
       {
         id: "ad",
         accessorFn: (ad) => ad.headline ?? ad.description ?? "",
+        size: 360,
+        minSize: 160,
         header: "Ad",
         cell: ({ row }) => {
           const ad = row.original
@@ -118,6 +124,8 @@ export function AdsTable({
       {
         id: "date",
         accessorFn: (ad) => dateSortValue(ad.dateLabel),
+        size: 150,
+        minSize: 110,
         header: "Date",
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-muted-foreground">
@@ -127,6 +135,9 @@ export function AdsTable({
       },
       {
         id: "stats",
+        enableSorting: false,
+        size: 180,
+        minSize: 120,
         header: "Stats",
         cell: ({ row }) => {
           const stats = row.original.stats
@@ -145,11 +156,17 @@ export function AdsTable({
       },
       {
         id: "thumbnail",
+        enableSorting: false,
+        size: 96,
+        minSize: 72,
         header: "Thumbnail",
         cell: ({ row }) => <AdThumbnail ad={row.original} />,
       },
       {
         id: "actions",
+        enableSorting: false,
+        enableResizing: false,
+        size: 56,
         header: () => null,
         cell: ({ row }) => <SaveAdButton ad={row.original} />,
       },
@@ -157,8 +174,8 @@ export function AdsTable({
   }, [ads, selectedIds, onToggleSelect, onSelectAll])
 
   return (
-    <div className="overflow-hidden rounded-xl border">
-      <DataTable columns={columns} data={ads} />
+    <div className="overflow-x-auto rounded-xl border">
+      <DataTable columns={columns} data={ads} enableColumnResizing />
     </div>
   )
 }

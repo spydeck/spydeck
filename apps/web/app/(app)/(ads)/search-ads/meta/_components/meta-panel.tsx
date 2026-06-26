@@ -81,7 +81,7 @@ export function MetaAdsPanel() {
       {!isLoading && !isError && data && ads.length > 0 && (
         <AdsResults
           ads={ads}
-          totalLabel={total != null ? `${total.toLocaleString()} results` : undefined}
+          total={total}
           resetKey={submittedParams}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
