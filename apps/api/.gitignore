@@ -1,3 +1,6 @@
 .env
 .env.local
 dist/
+
+# runtime log files
+logs/
