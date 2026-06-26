@@ -18,7 +18,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Social Planner",
+  title: "Spydeck",
   description: "Plan and schedule your social posts",
 };
 

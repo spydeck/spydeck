@@ -70,7 +70,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <Link href="/">
                 <img
                   src="/logo.png?v=1"
-                  alt="Social Planner"
+                  alt="Spydeck"
                   width={24}
                   height={24}
                   className="size-6 rounded"

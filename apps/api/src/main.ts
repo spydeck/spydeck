@@ -18,8 +18,8 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('Social Planner API')
-    .setDescription('Social Planner backend API')
+    .setTitle('Spydeck API')
+    .setDescription('Spydeck backend API')
     .setVersion('1.0')
     .build();
   const document = SwaggerModule.createDocument(app, config);
