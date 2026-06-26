@@ -10,7 +10,11 @@ import {
   Put,
 } from '@nestjs/common';
 import { SyncService } from './sync.service';
-import { ExtractProfileDto, SaveSyncConfigsDto } from './sync.dto';
+import {
+  AdDetailExtractDto,
+  ExtractProfileDto,
+  SaveSyncConfigsDto,
+} from './sync.dto';
 
 @Controller('sync')
 export class SyncController {
@@ -37,6 +41,12 @@ export class SyncController {
   @HttpCode(HttpStatus.ACCEPTED)
   syncPosts(@Param('id', ParseUUIDPipe) id: string) {
     return this.syncService.enqueueSyncPosts({ authorId: id });
+  }
+
+  @Post('ad-detail')
+  @HttpCode(HttpStatus.ACCEPTED)
+  extractAdDetail(@Body() dto: AdDetailExtractDto) {
+    return this.syncService.enqueueAdDetailExtract(dto);
   }
 
   @Put('authors/:id/sync-config')

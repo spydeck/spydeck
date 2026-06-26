@@ -7,6 +7,7 @@ import type { DrizzleDB } from '../db/database.module';
 import { authorSyncConfigs } from '../db/schema';
 import { ProfileExtractPayload } from './profile-extract.processor';
 import type { SyncPostsPayload } from './sync-posts.processor';
+import type { AdDetailPayload } from './ad-detail.strategy';
 import type { SyncConfigItemDto } from './sync.dto';
 
 @Injectable()
@@ -16,6 +17,7 @@ export class SyncService {
   constructor(
     @InjectQueue('profile-extract') private readonly queue: Queue,
     @InjectQueue('sync-posts') private readonly syncPostsQueue: Queue,
+    @InjectQueue('ad-detail-extract') private readonly adDetailQueue: Queue,
     @Inject(DB) private readonly db: DrizzleDB,
   ) {}
 
@@ -66,6 +68,28 @@ export class SyncService {
     } catch (err) {
       this.logger.error(
         `failed to enqueue sync-posts for author ${payload.authorId}`,
+        (err as Error).stack,
+      );
+      throw err;
+    }
+  }
+
+  async enqueueAdDetailExtract(
+    payload: AdDetailPayload,
+  ): Promise<{ jobId: string }> {
+    try {
+      const job = await this.adDetailQueue.add('ad-detail-extract', payload, {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 2000 },
+      });
+      const jobId = job.id ?? '';
+      this.logger.log(
+        `enqueued ad-detail-extract job ${jobId} for ${payload.platform}`,
+      );
+      return { jobId };
+    } catch (err) {
+      this.logger.error(
+        `failed to enqueue ad-detail-extract for ${payload.platform}`,
         (err as Error).stack,
       );
       throw err;

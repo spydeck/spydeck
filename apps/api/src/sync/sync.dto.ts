@@ -18,6 +18,27 @@ export class ExtractProfileDto {
   platform?: 'instagram' | 'tiktok' | 'youtube' | 'x';
 }
 
+export class AdDetailExtractDto {
+  @IsIn(['linkedin', 'meta', 'tiktok', 'google'])
+  platform!: 'linkedin' | 'meta' | 'tiktok' | 'google';
+
+  // LinkedIn and Google details are fetched by ad URL; Meta and TikTok by ad id.
+  @ValidateIf(
+    (o: AdDetailExtractDto) =>
+      o.platform === 'linkedin' || o.platform === 'google',
+  )
+  @IsString()
+  @IsNotEmpty()
+  url?: string;
+
+  @ValidateIf(
+    (o: AdDetailExtractDto) => o.platform === 'meta' || o.platform === 'tiktok',
+  )
+  @IsString()
+  @IsNotEmpty()
+  adId?: string;
+}
+
 export class SyncConfigItemDto {
   @IsIn(['instagram', 'tiktok', 'youtube', 'x'])
   platform!: 'instagram' | 'tiktok' | 'youtube' | 'x';
