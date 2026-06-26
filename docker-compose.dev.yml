@@ -1,0 +1,44 @@
+# Dev infra only — Postgres + Redis. Run the apps locally with `pnpm dev`.
+#
+#   docker compose -f docker-compose.dev.yml up -d
+#
+# Then point apps/api/.env at these:
+#   DATABASE_URL=postgresql://socialplanner:socialplanner@localhost:5432/socialplanner
+#   REDIS_HOST=localhost
+#   REDIS_PORT=6379
+# And apply migrations once:  pnpm --filter api db:migrate
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: socialplanner
+      POSTGRES_PASSWORD: socialplanner
+      POSTGRES_DB: socialplanner
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U socialplanner"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres-data:
+  redis-data:
