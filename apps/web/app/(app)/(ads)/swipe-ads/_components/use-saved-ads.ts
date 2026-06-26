@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import type { AdResult } from "../../search-ads/_components/mock-ads"
 
 // ponytail: localStorage persistence — no backend per task spec.
@@ -51,6 +51,14 @@ function readSaved(): AdResult[] {
   }
 }
 
+function persist(ads: AdResult[]) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(ads))
+  } catch {
+    // ignore write failures (quota, private mode)
+  }
+}
+
 export function useSavedAds() {
   const [ads, setAds] = useState<AdResult[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -60,17 +68,32 @@ export function useSavedAds() {
     setLoaded(true)
   }, [])
 
+  // Reads fresh from storage on every write so multiple mounted instances
+  // (e.g. one per result card) don't clobber each other's saves.
   const removeAd = useCallback((id: string) => {
-    setAds((prev) => {
-      const next = prev.filter((ad) => ad.id !== id)
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      } catch {
-        // ignore write failures (quota, private mode)
-      }
-      return next
-    })
+    const next = readSaved().filter((ad) => ad.id !== id)
+    persist(next)
+    setAds(next)
   }, [])
 
-  return { ads, loaded, removeAd }
+  const saveAd = useCallback((ad: AdResult) => {
+    const current = readSaved()
+    if (current.some((a) => a.id === ad.id)) return
+    const next = [ad, ...current]
+    persist(next)
+    setAds(next)
+  }, [])
+
+  const toggleAd = useCallback((ad: AdResult) => {
+    const current = readSaved()
+    const next = current.some((a) => a.id === ad.id)
+      ? current.filter((a) => a.id !== ad.id)
+      : [ad, ...current]
+    persist(next)
+    setAds(next)
+  }, [])
+
+  const savedIds = useMemo(() => new Set(ads.map((ad) => ad.id)), [ads])
+
+  return { ads, loaded, savedIds, removeAd, saveAd, toggleAd }
 }
