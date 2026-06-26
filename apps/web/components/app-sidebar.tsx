@@ -68,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link href="/">
-                <Image
+                <img
                   src="/logo.png?v=1"
                   alt="Social Planner"
                   width={24}
