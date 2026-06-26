@@ -15,12 +15,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
-  Building2Icon,
   BookmarkIcon,
+  Building2Icon,
   LayoutDashboardIcon,
   MegaphoneIcon,
   NewspaperIcon,
-  SaveIcon,
   Settings2Icon,
   UsersRoundIcon,
 } from "lucide-react";
@@ -45,8 +44,8 @@ const navGroups = [
     label: "Ads Library",
     items: [
       { title: "Search Ads", url: "/search-ads", icon: <MegaphoneIcon /> },
-      { title: "Swipe Ads", url: "/swipe-ads", icon: <SaveIcon /> },
       { title: "Advertisers", url: "/advertisers", icon: <Building2Icon /> },
+      { title: "Swipe Ads", url: "/swipe-ads", icon: <BookmarkIcon /> },
     ],
   },
 ];
@@ -76,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   height={24}
                   className="size-6 rounded"
                 />
-                <span className="text-base font-semibold">Social Planner</span>
+                <span className="text-base font-semibold">Spydeck</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
