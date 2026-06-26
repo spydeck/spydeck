@@ -1,9 +1,17 @@
-import { Controller, Get, Query, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { AdsService } from './ads.service';
 import {
   GoogleAdvertisersDto,
   GoogleCompanyAdsDto,
+  GoogleCreativesDto,
   MetaAdsDto,
   TikTokAdsDto,
   LinkedInAdsDto,
@@ -24,6 +32,11 @@ export class AdsController {
   @Get('google/company-ads')
   googleCompanyAds(@Query() q: GoogleCompanyAdsDto) {
     return this.adsService.googleCompanyAds(q);
+  }
+
+  @Post('google/creatives')
+  googleCreatives(@Body() body: GoogleCreativesDto) {
+    return this.adsService.googleCreatives(body.urls);
   }
 
   @Get('meta')

@@ -1,119 +1,144 @@
 "use client"
 
-import { useState } from "react"
+import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
-import { SearchIcon } from "lucide-react"
+import {
+  Building2Icon,
+  ChevronsUpDownIcon,
+  Loader2Icon,
+  XIcon,
+} from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import { CountrySelect } from "@/components/country-select"
+import {
+  Command,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import type { Advertiser, AdvertisersResponse } from "./google-ad"
 
-export function GoogleAdvertiserSearch({
-  selectedId,
-  onSelect,
+export function GoogleAdvertiserSelect({
+  label,
+  region,
+  onChange,
+  className,
 }: {
-  selectedId?: string
-  onSelect: (advertiser: Advertiser) => void
+  label: string
+  region: string
+  onChange: (advertiser: Advertiser | null) => void
+  className?: string
 }) {
-  const [query, setQuery] = useState("")
-  const [region, setRegion] = useState("")
-  const [submitted, setSubmitted] = useState<{ query: string; region: string } | null>(
-    null
-  )
+  const [open, setOpen] = React.useState(false)
+  const [term, setTerm] = React.useState("")
+  const [debounced, setDebounced] = React.useState("")
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["google-advertisers", submitted],
-    queryFn: () => {
-      const params = new URLSearchParams()
-      params.set("query", submitted!.query)
-      if (submitted!.region) params.set("region", submitted!.region)
-      return apiFetch<AdvertisersResponse>(`/ads/google/advertisers?${params.toString()}`)
-    },
-    enabled: !!submitted,
+  React.useEffect(() => {
+    const t = setTimeout(() => setDebounced(term.trim()), 350)
+    return () => clearTimeout(t)
+  }, [term])
+
+  const { data, isFetching } = useQuery({
+    queryKey: ["google-advertisers", debounced, region],
+    queryFn: () =>
+      apiFetch<AdvertisersResponse>(
+        `/ads/google/advertisers?query=${encodeURIComponent(debounced)}${region ? `&region=${region}` : ""}`
+      ),
+    enabled: open && debounced.length >= 2,
+    staleTime: 5 * 60 * 1000,
   })
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!query.trim()) return
-    setSubmitted({ query, region })
-  }
+  const advertisers = data?.advertisers ?? []
 
   return (
-    <div className="flex flex-col gap-3">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <p className="text-sm font-medium">Step 1: Find advertiser</p>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="relative flex-1">
-            <SearchIcon className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Advertiser name..."
-              className="pl-8"
-              aria-label="Advertiser name"
-            />
-          </div>
-          <CountrySelect
-            value={region}
-            onChange={setRegion}
-            placeholder="Region"
-            allowEmpty
-            className="w-full sm:w-36"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("justify-between font-normal", className)}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <Building2Icon className="size-4 shrink-0 text-muted-foreground" />
+            <span className={cn("truncate", !label && "text-muted-foreground")}>
+              {label || "Search company"}
+            </span>
+          </span>
+          <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput
+            value={term}
+            onValueChange={setTerm}
+            placeholder="Search advertiser…"
           />
-          <Button type="submit" disabled={!query.trim()}>
-            <SearchIcon data-icon="inline-start" />
-            Find
-          </Button>
-        </div>
-      </form>
-
-      {isLoading && (
-        <div className="flex flex-col gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
-          ))}
-        </div>
-      )}
-
-      {isError && (
-        <p className="text-sm text-destructive">
-          {error instanceof Error ? error.message : "Failed to search advertisers."}
-        </p>
-      )}
-
-      {!isLoading && data && data.advertisers.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Select an advertiser</p>
-          {data.advertisers.map((adv) => (
-            <div
-              key={adv.advertiser_id}
-              className="flex items-center justify-between rounded-lg border px-4 py-3"
-            >
-              <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{adv.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {adv.region} · ~{adv.number_of_ads_estimate.toLocaleString()} ads
-                </span>
-              </div>
-              <Button
-                variant={selectedId === adv.advertiser_id ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => onSelect(adv)}
+          <CommandList>
+            {label && (
+              <CommandItem
+                value="__clear"
+                onSelect={() => {
+                  onChange(null)
+                  setOpen(false)
+                }}
               >
-                {selectedId === adv.advertiser_id ? "Selected" : "Select"}
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+                <XIcon className="size-4 text-muted-foreground" />
+                Clear selection
+              </CommandItem>
+            )}
 
-      {!isLoading && data && data.advertisers.length === 0 && (
-        <p className="text-center text-sm text-muted-foreground">
-          No advertisers found. Try a different name.
-        </p>
-      )}
-    </div>
+            {debounced.length < 2 && (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                Type at least 2 characters to search.
+              </div>
+            )}
+            {debounced.length >= 2 && isFetching && (
+              <div className="flex items-center justify-center gap-2 px-3 py-6 text-sm text-muted-foreground">
+                <Loader2Icon className="size-4 animate-spin" />
+                Searching…
+              </div>
+            )}
+            {debounced.length >= 2 && !isFetching && advertisers.length === 0 && (
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                No advertisers found.
+              </div>
+            )}
+            {advertisers.length > 0 && (
+              <CommandGroup>
+                {advertisers.map((a) => (
+                  <CommandItem
+                    key={a.advertiser_id}
+                    value={a.advertiser_id}
+                    onSelect={() => {
+                      onChange(a)
+                      setOpen(false)
+                    }}
+                  >
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm">{a.name}</span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        {a.region} · ~
+                        {a.number_of_ads_estimate?.toLocaleString?.() ??
+                          a.number_of_ads_estimate}{" "}
+                        ads
+                      </span>
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

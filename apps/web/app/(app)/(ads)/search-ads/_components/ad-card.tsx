@@ -1,12 +1,19 @@
 "use client"
 
 import { useState } from "react"
+import { ExternalLinkIcon, PlayCircleIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { MetaPlatformIcons } from "./meta-platform-icons"
 import { SaveAdButton } from "./save-ad-button"
 import type { NormalizedAd } from "./normalized-ad"
+
+// Google video ads are YouTube links — render them as an embed, not a <video>.
+function youtubeEmbedUrl(url: string): string | null {
+  const id = url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/)?.[1]
+  return id ? `https://www.youtube.com/embed/${id}` : null
+}
 
 export function AdCard({ ad }: { ad: NormalizedAd }) {
   const [expanded, setExpanded] = useState(false)
@@ -60,7 +67,15 @@ export function AdCard({ ad }: { ad: NormalizedAd }) {
       )}
 
       {/* Creative — natural height for the masonry layout */}
-      {ad.videoUrl ? (
+      {ad.videoUrl && youtubeEmbedUrl(ad.videoUrl) ? (
+        <iframe
+          src={youtubeEmbedUrl(ad.videoUrl)!}
+          title={ad.headline ?? ad.advertiser}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="aspect-video w-full bg-muted"
+        />
+      ) : ad.videoUrl ? (
         <video
           src={ad.videoUrl}
           poster={ad.imageUrl ?? undefined}
@@ -75,6 +90,21 @@ export function AdCard({ ad }: { ad: NormalizedAd }) {
           alt={ad.headline ?? ad.advertiser}
           className="max-h-120 w-full bg-muted object-cover"
         />
+      ) : ad.destinationUrl ? (
+        // Some sources (e.g. Google) don't return media in the list — link to the creative.
+        <a
+          href={ad.destinationUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex aspect-video w-full flex-col items-center justify-center gap-1.5 bg-muted text-sm text-muted-foreground transition-colors hover:bg-muted/70 hover:text-foreground"
+        >
+          {(ad.subtitle ?? "").toLowerCase().includes("video") ? (
+            <PlayCircleIcon className="size-7" />
+          ) : (
+            <ExternalLinkIcon className="size-6" />
+          )}
+          View creative
+        </a>
       ) : null}
 
       {/* Headline + view details */}

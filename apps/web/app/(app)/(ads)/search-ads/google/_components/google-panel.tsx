@@ -2,106 +2,101 @@
 
 import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { SearchIcon } from "lucide-react"
 import { apiFetch } from "@/lib/api"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { AdsResults } from "../../_components/ads-results"
 import { AdsSkeleton, AdsEmptyState } from "../../_components/ads-states"
-import { GoogleAdvertiserSearch } from "./google-advertiser-search"
+import { GoogleForm } from "./google-form"
 import {
-  defaultAdsForm,
+  defaultGoogleForm,
   normalizeGoogleAd,
   type Advertiser,
-  type AdsForm,
   type GoogleAdsResponse,
+  type GoogleCreative,
+  type GoogleForm as GoogleFormState,
 } from "./google-ad"
 
 export function GoogleAdsPanel() {
-  const [selected, setSelected] = useState<Advertiser | null>(null)
-  const [adsForm, setAdsForm] = useState<AdsForm>(defaultAdsForm)
-  const [submitted, setSubmitted] = useState<{ advertiser: Advertiser; form: AdsForm } | null>(
-    null
-  )
+  const [form, setForm] = useState<GoogleFormState>(defaultGoogleForm)
+  const [submitted, setSubmitted] = useState<GoogleFormState | null>(null)
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["google-ads", submitted],
     queryFn: () => {
-      const { advertiser, form } = submitted!
+      const p = submitted!
       const params = new URLSearchParams()
-      params.set("advertiser_id", advertiser.advertiser_id)
-      if (advertiser.region) params.set("region", advertiser.region)
-      if (form.start_date) params.set("start_date", form.start_date)
-      if (form.end_date) params.set("end_date", form.end_date)
-      if (form.platform) params.set("platform", form.platform)
-      if (form.format) params.set("format", form.format)
+      if (p.advertiserId) params.set("advertiser_id", p.advertiserId)
+      else if (p.domain.trim()) params.set("domain", p.domain.trim())
+      if (p.region) params.set("region", p.region)
+      if (p.format) params.set("format", p.format)
+      if (p.startDate) params.set("start_date", p.startDate)
+      if (p.endDate) params.set("end_date", p.endDate)
       return apiFetch<GoogleAdsResponse>(`/ads/google/company-ads?${params.toString()}`)
     },
     enabled: !!submitted,
   })
 
   const rawAds = data?.ads ?? []
-  const ads = rawAds.map(normalizeGoogleAd)
 
-  function selectAdvertiser(advertiser: Advertiser) {
-    setSelected(advertiser)
-    setSubmitted({ advertiser, form: adsForm })
+  // Google's list returns no media for video ads — resolve it in one batch call.
+  const videoUrls = rawAds
+    .filter((a) => a.format?.toLowerCase() === "video" && !a.imageUrl)
+    .map((a) => a.adUrl)
+  const { data: creatives } = useQuery({
+    queryKey: ["google-creatives", videoUrls],
+    queryFn: () =>
+      apiFetch<Record<string, GoogleCreative>>("/ads/google/creatives", {
+        method: "POST",
+        body: JSON.stringify({ urls: videoUrls }),
+      }),
+    enabled: videoUrls.length > 0,
+    staleTime: Infinity,
+  })
+
+  const ads = rawAds.map((a) => {
+    const n = normalizeGoogleAd(a)
+    const c = creatives?.[a.creativeId]
+    if (c?.videoUrl) {
+      n.videoUrl = c.videoUrl
+      const ytId = c.videoUrl.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/)?.[1]
+      n.imageUrl =
+        n.imageUrl ??
+        c.imageUrl ??
+        (ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : null)
+    }
+    return n
+  })
+  const canSubmit = !!(form.advertiserId || form.domain.trim())
+
+  function setField(field: keyof GoogleFormState, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  function loadAds(e: React.FormEvent) {
+  // Picking an advertiser clears the domain (they're alternative lookups).
+  function onAdvertiser(a: Advertiser | null) {
+    setForm((prev) => ({
+      ...prev,
+      advertiserId: a?.advertiser_id ?? "",
+      advertiserName: a?.name ?? "",
+      region: a?.region || prev.region,
+      domain: a ? "" : prev.domain,
+    }))
+  }
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!selected) return
-    setSubmitted({ advertiser: selected, form: adsForm })
-  }
-
-  function setField(field: keyof AdsForm, value: string) {
-    setAdsForm((prev) => ({ ...prev, [field]: value }))
+    if (!canSubmit) return
+    setSubmitted({ ...form })
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <GoogleAdvertiserSearch
-        selectedId={selected?.advertiser_id}
-        onSelect={selectAdvertiser}
+      <GoogleForm
+        form={form}
+        onChange={setField}
+        onAdvertiser={onAdvertiser}
+        onSubmit={handleSubmit}
+        canSubmit={canSubmit}
       />
-
-      {selected && (
-        <form onSubmit={loadAds} className="flex flex-col gap-3">
-          <p className="text-sm font-medium">
-            Step 2: Load ads for <span className="text-foreground">{selected.name}</span>
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Input
-              value={adsForm.start_date}
-              onChange={(e) => setField("start_date", e.target.value)}
-              placeholder="Start date (YYYY-MM-DD)"
-              className="w-full sm:w-48"
-            />
-            <Input
-              value={adsForm.end_date}
-              onChange={(e) => setField("end_date", e.target.value)}
-              placeholder="End date (YYYY-MM-DD)"
-              className="w-full sm:w-48"
-            />
-            <Input
-              value={adsForm.platform}
-              onChange={(e) => setField("platform", e.target.value)}
-              placeholder="Platform (optional)"
-              className="w-full sm:w-36"
-            />
-            <Input
-              value={adsForm.format}
-              onChange={(e) => setField("format", e.target.value)}
-              placeholder="Format (optional)"
-              className="w-full sm:w-36"
-            />
-            <Button type="submit">
-              <SearchIcon data-icon="inline-start" />
-              Load Ads
-            </Button>
-          </div>
-        </form>
-      )}
 
       {isLoading && <AdsSkeleton />}
 
@@ -111,21 +106,16 @@ export function GoogleAdsPanel() {
         </p>
       )}
 
-      {selected && !isLoading && !isError && data && ads.length === 0 && (
-        <AdsEmptyState message="No ads found for this advertiser." />
+      {!isLoading && !isError && data && ads.length === 0 && (
+        <AdsEmptyState message="No ads found for this search." />
       )}
 
       {!isLoading && !isError && ads.length > 0 && (
-        <AdsResults
-          ads={ads}
-          rawAds={rawAds}
-          platform="Google"
-          resetKey={submitted}
-        />
+        <AdsResults ads={ads} rawAds={rawAds} platform="Google" resetKey={submitted} />
       )}
 
-      {!selected && (
-        <AdsEmptyState message="Search for an advertiser to browse their Google ads." />
+      {!submitted && (
+        <AdsEmptyState message="Search a company by name or enter a domain to browse Google ads." />
       )}
     </div>
   )

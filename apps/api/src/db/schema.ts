@@ -95,6 +95,22 @@ export const swipeAdsCategories = pgTable('swipe_ads_categories', {
     .notNull(),
 });
 
+// Cache of Google ad creative media (resolved via Apify), keyed by creativeId.
+// The Google ads list endpoint returns no media for video ads, so we resolve it
+// once per creative and reuse it.
+export const googleCreatives = pgTable('google_creatives', {
+  creativeId: text('creative_id').primaryKey(),
+  advertiserId: text('advertiser_id'),
+  format: text('format'),
+  videoUrl: text('video_url'),
+  imageUrl: text('image_url'),
+  headline: text('headline'),
+  clickUrl: text('click_url'),
+  fetchedAt: timestamp('fetched_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // An advertiser (e.g. "Lusha") the user tracks. Its presence on each ad
 // platform lives in advertiser_channels.
 export const advertisers = pgTable('advertisers', {
@@ -454,6 +470,7 @@ export type SwipeAdsCategory = typeof swipeAdsCategories.$inferSelect;
 export type NewSwipeAdsCategory = typeof swipeAdsCategories.$inferInsert;
 export type SwipeAd = typeof swipeAds.$inferSelect;
 export type NewSwipeAd = typeof swipeAds.$inferInsert;
+export type GoogleCreative = typeof googleCreatives.$inferSelect;
 export type Advertiser = typeof advertisers.$inferSelect;
 export type NewAdvertiser = typeof advertisers.$inferInsert;
 export type AdvertiserChannel = typeof advertiserChannels.$inferSelect;

@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { ScrapeCreatorsClient } from '../scrapecreators/scrapecreators.client';
 import { ApifyClient } from '../apify/apify.client';
 import { DB } from '../db/database.module';
@@ -8,7 +8,9 @@ import {
   linkedinCompanySearches,
   linkedinCompanies as linkedinCompaniesTable,
   metaCompanies as metaCompaniesTable,
+  googleCreatives as googleCreativesTable,
 } from '../db/schema';
+import type { GoogleCreative } from '../db/schema';
 import {
   GoogleAdvertisersDto,
   GoogleCompanyAdsDto,
@@ -22,6 +24,23 @@ import {
 // ScrapeCreators has no LinkedIn company-by-name search, so we use this Apify
 // actor ("short" mode = lightweight results) to power the company autocomplete.
 const LINKEDIN_COMPANY_SEARCH_ACTOR = 'harvestapi~linkedin-company-search';
+
+// Resolves Google ad creative media (incl. video) in a single run from a list
+// of transparency creative URLs.
+const GOOGLE_ADS_ACTOR = 'silva95gustavo~google-ads-scraper';
+
+interface GoogleAdActorItem {
+  creativeId?: string;
+  advertiserId?: string;
+  format?: string;
+  previewUrl?: string | null;
+  variations?: Array<{
+    headline?: string;
+    clickUrl?: string;
+    videoUrl?: string;
+    imageUrl?: string;
+  }>;
+}
 
 // ponytail: 30-day refresh window keeps Apify calls minimal; company basics
 // rarely change. Lower it if results feel stale.
@@ -177,6 +196,75 @@ export class AdsService {
 
   googleCompanyAds(p: GoogleCompanyAdsDto) {
     return this.client.request('/v1/google/company/ads', { ...p });
+  }
+
+  // Resolve creative media (videoUrl/imageUrl) for Google ad transparency URLs.
+  // The list endpoint returns no media for video ads; one Apify run covers the
+  // whole batch and results are cached per creativeId.
+  async googleCreatives(
+    urls: string[],
+  ): Promise<Record<string, GoogleCreative>> {
+    // creativeId -> url, de-duped
+    const byId = new Map<string, string>();
+    for (const url of urls) {
+      const id = url.match(/\/creative\/(CR\d+)/)?.[1];
+      if (id && !byId.has(id)) byId.set(id, url);
+    }
+    if (byId.size === 0) return {};
+
+    const cached = await this.db
+      .select()
+      .from(googleCreativesTable)
+      .where(inArray(googleCreativesTable.creativeId, [...byId.keys()]));
+    const result: Record<string, GoogleCreative> = {};
+    for (const c of cached) result[c.creativeId] = c;
+
+    const missing = [...byId.entries()].filter(([id]) => !result[id]);
+    if (missing.length === 0) return result;
+
+    const items = await this.apify.runActor<GoogleAdActorItem>(
+      GOOGLE_ADS_ACTOR,
+      {
+        startUrls: missing.map(([, url]) => ({ url })),
+        skipDetails: false,
+        shouldDownloadAssets: false,
+        resultsLimit: 1,
+      },
+    );
+
+    const rows = items
+      .filter((it) => it.creativeId)
+      .map((it) => {
+        const v = it.variations?.[0];
+        return {
+          creativeId: it.creativeId!,
+          advertiserId: it.advertiserId ?? null,
+          format: it.format ?? null,
+          videoUrl: v?.videoUrl ?? null,
+          imageUrl: v?.imageUrl ?? it.previewUrl ?? null,
+          headline: v?.headline ?? null,
+          clickUrl: v?.clickUrl ?? null,
+        };
+      });
+
+    if (rows.length > 0) {
+      await this.db
+        .insert(googleCreativesTable)
+        .values(rows)
+        .onConflictDoUpdate({
+          target: googleCreativesTable.creativeId,
+          set: {
+            videoUrl: sql`excluded.video_url`,
+            imageUrl: sql`excluded.image_url`,
+            headline: sql`excluded.headline`,
+            clickUrl: sql`excluded.click_url`,
+            fetchedAt: new Date(),
+          },
+        });
+      for (const r of rows) result[r.creativeId] = { ...r, fetchedAt: new Date() };
+    }
+
+    return result;
   }
 
   async metaAds(p: MetaAdsDto) {

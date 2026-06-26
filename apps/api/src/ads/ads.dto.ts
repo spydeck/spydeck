@@ -1,4 +1,18 @@
-import { IsString, IsOptional, IsNotEmpty, Length } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNotEmpty,
+  IsArray,
+  ArrayNotEmpty,
+  Length,
+} from 'class-validator';
+
+export class GoogleCreativesDto {
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  urls!: string[];
+}
 
 export class GoogleAdvertisersDto {
   @IsString() @IsNotEmpty() query!: string;
@@ -6,12 +20,16 @@ export class GoogleAdvertisersDto {
 }
 
 export class GoogleCompanyAdsDto {
-  @IsString() @IsNotEmpty() advertiser_id!: string;
+  // One of advertiser_id or domain is required (the company-ads endpoint accepts either).
+  @IsOptional() @IsString() advertiser_id?: string;
+  @IsOptional() @IsString() domain?: string;
   @IsOptional() @IsString() region?: string;
   @IsOptional() @IsString() start_date?: string;
   @IsOptional() @IsString() end_date?: string;
   @IsOptional() @IsString() platform?: string;
   @IsOptional() @IsString() format?: string;
+  @IsOptional() @IsString() topic?: string;
+  @IsOptional() @IsString() cursor?: string;
 }
 
 export class MetaAdsDto {

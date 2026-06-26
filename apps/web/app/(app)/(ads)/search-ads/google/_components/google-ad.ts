@@ -27,18 +27,34 @@ export interface GoogleAdsResponse {
   cursor?: string
 }
 
-export interface AdsForm {
-  start_date: string
-  end_date: string
-  platform: string
-  format: string
+// Media resolved per creative via the Apify batch endpoint.
+export interface GoogleCreative {
+  creativeId: string
+  format: string | null
+  videoUrl: string | null
+  imageUrl: string | null
+  headline: string | null
+  clickUrl: string | null
 }
 
-export const defaultAdsForm: AdsForm = {
-  start_date: "",
-  end_date: "",
-  platform: "",
+export interface GoogleForm {
+  advertiserId: string
+  advertiserName: string
+  domain: string
+  region: string
+  format: string // "" | "text" | "image" | "video"
+  startDate: string
+  endDate: string
+}
+
+export const defaultGoogleForm: GoogleForm = {
+  advertiserId: "",
+  advertiserName: "",
+  domain: "",
+  region: "",
   format: "",
+  startDate: "",
+  endDate: "",
 }
 
 export function normalizeGoogleAd(ad: GoogleAd): NormalizedAd {
