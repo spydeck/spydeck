@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { BookmarkIcon, FileSearchIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api"
@@ -60,6 +60,7 @@ export function AdsResults<TRaw>({
   const [fetchingDetails, setFetchingDetails] = useState(false)
   const [detailAd, setDetailAd] = useState<NormalizedAd | null>(null)
   const { saveAd } = useSavedAds()
+  const queryClient = useQueryClient()
 
   // Which of the shown ads already have a persisted detail (so rows are marked).
   const apiPlatform = platform.toLowerCase()
@@ -140,6 +141,12 @@ export function AdsResults<TRaw>({
         `Queued detail fetch for ${requests.length} ad${requests.length > 1 ? "s" : ""}`
       )
       setSelectedIds(new Set())
+      // ponytail: jobs are async with no completion signal here; refresh the
+      // persisted set after a short delay so synced rows turn green. Poll the
+      // job status if exact timing matters.
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["ad-persisted", apiPlatform] })
+      }, 5000)
     } catch {
       toast.error("Failed to queue ad detail fetch")
     } finally {

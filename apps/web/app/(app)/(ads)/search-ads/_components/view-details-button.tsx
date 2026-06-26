@@ -18,9 +18,18 @@ export function ViewDetailsButton({
       variant="ghost"
       size="icon"
       aria-label="View ad details"
-      title={persisted ? "View details" : "No details yet — use Fetch details"}
+      title={
+        persisted
+          ? "Details synchronized — click to view"
+          : "No details yet — use Fetch details"
+      }
       onClick={() => onView?.(externalId)}
-      className={cn("size-8", persisted && "text-primary")}
+      className={cn(
+        "size-8",
+        persisted
+          ? "text-green-600 hover:text-green-600 dark:text-green-500"
+          : "text-muted-foreground"
+      )}
     >
       <EyeIcon className="size-4" />
     </Button>
