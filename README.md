@@ -1,4 +1,4 @@
-# Social Planner
+# Spydeck
 
 A self-hosted tool for collecting, browsing, and building a **swipe file** of social
 media posts from creators you follow. Point it at a TikTok / Instagram / YouTube / X
