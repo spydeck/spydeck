@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { FileLogger } from './common/file-logger';
 
@@ -9,6 +10,7 @@ async function bootstrap() {
     // Tee all logs to apps/api/logs/{api,error}.log for tailing.
     logger: new FileLogger(),
   });
+  app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors({
     origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000',

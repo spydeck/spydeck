@@ -78,16 +78,16 @@ export class GoogleAdDetailStrategy implements AdDetailStrategy {
 export class AdDetailStrategyRegistry {
   private readonly byPlatform: Map<AdPlatform, AdDetailStrategy>;
 
-  constructor(
-    @Inject(AD_DETAIL_STRATEGY) strategies: AdDetailStrategy[],
-  ) {
+  constructor(@Inject(AD_DETAIL_STRATEGY) strategies: AdDetailStrategy[]) {
     this.byPlatform = new Map(strategies.map((s) => [s.platform, s]));
   }
 
   resolve(platform: AdPlatform): AdDetailStrategy {
     const strategy = this.byPlatform.get(platform);
     if (!strategy) {
-      throw new Error(`No ad-detail strategy registered for platform: ${platform}`);
+      throw new Error(
+        `No ad-detail strategy registered for platform: ${platform}`,
+      );
     }
     return strategy;
   }

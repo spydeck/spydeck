@@ -27,7 +27,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SiteHeader } from "@/components/site-header"
+import { ChangePasswordCard } from "./_components/change-password-card"
 
 const schema = z.object({
   scrapeCreatorsKey: z.string().trim(),
@@ -108,12 +110,18 @@ export default function SettingsPage() {
       <SiteHeader title="Settings" />
       <div className="flex flex-1 flex-col items-center py-10 px-4">
         <div className="w-full max-w-2xl flex flex-col gap-6">
-          <p className="text-muted-foreground text-sm">
-            Manage your third-party API keys.
-          </p>
+          <Tabs defaultValue="api-keys">
+            <TabsList>
+              <TabsTrigger value="api-keys">API Keys</TabsTrigger>
+              <TabsTrigger value="password">Password</TabsTrigger>
+            </TabsList>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+            <TabsContent value="api-keys" className="flex flex-col gap-6 mt-4">
+              <p className="text-muted-foreground text-sm">
+                Manage your third-party API keys.
+              </p>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle>API Keys</CardTitle>
@@ -218,8 +226,14 @@ export default function SettingsPage() {
                   </Button>
                 </CardFooter>
               </Card>
-            </form>
-          </Form>
+                </form>
+              </Form>
+            </TabsContent>
+
+            <TabsContent value="password" className="mt-4">
+              <ChangePasswordCard />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </>

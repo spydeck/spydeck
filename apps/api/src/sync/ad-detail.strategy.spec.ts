@@ -29,7 +29,9 @@ describe('AdDetailStrategyRegistry', () => {
 
   it('throws for an unknown platform', () => {
     const registry = makeRegistry(makeClient());
-    expect(() => registry.resolve('snap' as any)).toThrow(/no ad-detail strategy/i);
+    expect(() => registry.resolve('snap' as any)).toThrow(
+      /no ad-detail strategy/i,
+    );
   });
 });
 
@@ -47,7 +49,9 @@ describe('ad detail strategies', () => {
 
   it('LinkedIn requires a url', () => {
     expect(() =>
-      new LinkedInAdDetailStrategy(makeClient()).fetchDetail({ platform: 'linkedin' }),
+      new LinkedInAdDetailStrategy(makeClient()).fetchDetail({
+        platform: 'linkedin',
+      }),
     ).toThrow(/url/i);
   });
 

@@ -3,7 +3,10 @@ import { and, asc, eq } from 'drizzle-orm';
 import { DB } from '../db/database.module';
 import type { DrizzleDB } from '../db/database.module';
 import { advertiserChannels, advertisers } from '../db/schema';
-import type { AdvertiserChannelDto, CreateAdvertiserDto } from './advertisers.dto';
+import type {
+  AdvertiserChannelDto,
+  CreateAdvertiserDto,
+} from './advertisers.dto';
 
 @Injectable()
 export class AdvertisersService {

@@ -21,6 +21,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { EllipsisVerticalIcon, CircleUserRoundIcon, CreditCardIcon, BellIcon, LogOutIcon } from "lucide-react"
+import { useLogout } from "@/lib/auth"
 
 export function NavUser({
   user,
@@ -32,6 +33,13 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const logout = useLogout()
+
+  function handleLogout() {
+    logout.mutate(undefined, {
+      onSuccess: () => { window.location.href = "/login" },
+    })
+  }
 
   return (
     <SidebarMenu>
@@ -94,9 +102,8 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOutIcon
-              />
+            <DropdownMenuItem onClick={handleLogout} disabled={logout.isPending}>
+              <LogOutIcon />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

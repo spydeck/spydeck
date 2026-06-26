@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { DB } from '../db/database.module';
 import type { DrizzleDB } from '../db/database.module';
@@ -38,9 +43,7 @@ export class SwipeAdsService {
 
   // Stored ads (esp. older LinkedIn saves) may lack a logo; backfill it from the
   // company tables by advertiser name so the UI shows the brand logo.
-  private async fillMissingLogos(
-    rows: { ad: unknown }[],
-  ): Promise<void> {
+  private async fillMissingLogos(rows: { ad: unknown }[]): Promise<void> {
     type Ad = { advertiser?: string; advertiserLogo?: string | null };
     const needing = rows
       .map((r) => r.ad as Ad)
@@ -91,7 +94,9 @@ export class SwipeAdsService {
       })
       .onConflictDoUpdate({ target: swipeAds.adId, set })
       .returning();
-    this.logger.log(`saved swipe ad ${adId} (source=${dto.source ?? 'manual'})`);
+    this.logger.log(
+      `saved swipe ad ${adId} (source=${dto.source ?? 'manual'})`,
+    );
     return row;
   }
 

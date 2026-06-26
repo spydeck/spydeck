@@ -425,6 +425,18 @@ export const linkedinCompanySearches = pgTable('linkedin_company_searches', {
     .notNull(),
 });
 
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  username: text('username').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export const authorsRelations = relations(authors, ({ many }) => ({
   profiles: many(authorsProfiles),
   syncConfigs: many(authorSyncConfigs),
@@ -491,3 +503,5 @@ export type MetaCompany = typeof metaCompanies.$inferSelect;
 export type NewMetaCompany = typeof metaCompanies.$inferInsert;
 export type LinkedinCompany = typeof linkedinCompanies.$inferSelect;
 export type NewLinkedinCompany = typeof linkedinCompanies.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;

@@ -261,7 +261,8 @@ export class AdsService {
             fetchedAt: new Date(),
           },
         });
-      for (const r of rows) result[r.creativeId] = { ...r, fetchedAt: new Date() };
+      for (const r of rows)
+        result[r.creativeId] = { ...r, fetchedAt: new Date() };
     }
 
     return result;
@@ -364,12 +365,17 @@ export class AdsService {
 
   // LinkedIn ads carry no advertiser logo. For companies we don't have a logo
   // for yet, fetch it once from the company endpoint and persist it.
-  private async ensureLinkedinCompanyLogos(ads: LinkedInAdRaw[]): Promise<void> {
+  private async ensureLinkedinCompanyLogos(
+    ads: LinkedInAdRaw[],
+  ): Promise<void> {
     const byId = new Map<string, { url: string; advertiser?: string }>();
     for (const ad of ads) {
       const id = linkedinCompanyId(ad.advertiserLinkedinPage);
       if (id && ad.advertiserLinkedinPage && !byId.has(id)) {
-        byId.set(id, { url: ad.advertiserLinkedinPage, advertiser: ad.advertiser });
+        byId.set(id, {
+          url: ad.advertiserLinkedinPage,
+          advertiser: ad.advertiser,
+        });
       }
     }
     if (byId.size === 0) return;
@@ -381,7 +387,9 @@ export class AdsService {
       })
       .from(linkedinCompaniesTable)
       .where(inArray(linkedinCompaniesTable.companyId, [...byId.keys()]));
-    const have = new Set(existing.filter((r) => r.logo).map((r) => r.companyId));
+    const have = new Set(
+      existing.filter((r) => r.logo).map((r) => r.companyId),
+    );
 
     const missing = [...byId.entries()]
       .filter(([id]) => !have.has(id))
@@ -428,7 +436,9 @@ export class AdsService {
   private async applyLinkedinLogos(ads: LinkedInAdRaw[]): Promise<void> {
     const ids = [
       ...new Set(
-        ads.map((a) => linkedinCompanyId(a.advertiserLinkedinPage)).filter(Boolean),
+        ads
+          .map((a) => linkedinCompanyId(a.advertiserLinkedinPage))
+          .filter(Boolean),
       ),
     ] as string[];
     if (ids.length === 0) return;
@@ -474,7 +484,8 @@ function normalizeMetaCompany(
     logo: item.image_uri ?? null,
     likes: typeof item.likes === 'number' ? item.likes : null,
     igUsername: item.ig_username ?? null,
-    igFollowers: typeof item.ig_followers === 'number' ? item.ig_followers : null,
+    igFollowers:
+      typeof item.ig_followers === 'number' ? item.ig_followers : null,
     verified: item.verification === 'BLUE_VERIFIED' || !!item.ig_verification,
   };
 }

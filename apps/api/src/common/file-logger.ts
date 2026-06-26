@@ -20,7 +20,9 @@ export class FileLogger extends ConsoleLogger {
   private static init() {
     if (FileLogger.all) return;
     mkdirSync(LOG_DIR, { recursive: true });
-    FileLogger.all = createWriteStream(join(LOG_DIR, 'api.log'), { flags: 'a' });
+    FileLogger.all = createWriteStream(join(LOG_DIR, 'api.log'), {
+      flags: 'a',
+    });
     FileLogger.errors = createWriteStream(join(LOG_DIR, 'error.log'), {
       flags: 'a',
     });

@@ -46,10 +46,7 @@ export class SwipeAdsController {
   }
 
   @Patch(':adId/category')
-  setCategory(
-    @Param('adId') adId: string,
-    @Body() dto: SetSwipeAdCategoryDto,
-  ) {
+  setCategory(@Param('adId') adId: string, @Body() dto: SetSwipeAdCategoryDto) {
     return this.service.setCategory(adId, dto);
   }
 }
