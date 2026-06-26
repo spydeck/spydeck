@@ -40,7 +40,8 @@ export function GoogleAdsPanel() {
     enabled: !!submitted,
   })
 
-  const ads = (data?.ads ?? []).map(normalizeGoogleAd)
+  const rawAds = data?.ads ?? []
+  const ads = rawAds.map(normalizeGoogleAd)
 
   function selectAdvertiser(advertiser: Advertiser) {
     setSelected(advertiser)
@@ -115,7 +116,12 @@ export function GoogleAdsPanel() {
       )}
 
       {!isLoading && !isError && ads.length > 0 && (
-        <AdsResults ads={ads} resetKey={submitted} />
+        <AdsResults
+          ads={ads}
+          rawAds={rawAds}
+          platform="Google"
+          resetKey={submitted}
+        />
       )}
 
       {!selected && (

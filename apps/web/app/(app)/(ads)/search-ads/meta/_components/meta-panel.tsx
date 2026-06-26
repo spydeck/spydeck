@@ -40,9 +40,8 @@ export function MetaAdsPanel() {
     enabled: !!submittedParams,
   })
 
-  const ads = (data?.pages.flatMap((page) => page.searchResults) ?? []).map(
-    normalizeMetaAd
-  )
+  const rawAds = data?.pages.flatMap((page) => page.searchResults) ?? []
+  const ads = rawAds.map(normalizeMetaAd)
   const total = data?.pages[0]?.searchResultsCount
 
   const canSubmit = form.query.trim().length > 0
@@ -81,6 +80,8 @@ export function MetaAdsPanel() {
       {!isLoading && !isError && data && ads.length > 0 && (
         <AdsResults
           ads={ads}
+          rawAds={rawAds}
+          platform="Meta"
           total={total}
           resetKey={submittedParams}
           hasNextPage={hasNextPage}

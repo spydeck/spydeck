@@ -40,7 +40,8 @@ export function LinkedInAdsPanel() {
     enabled: !!submittedParams,
   })
 
-  const ads = (data?.pages.flatMap((page) => page.ads) ?? []).map(normalizeLinkedInAd)
+  const rawAds = data?.pages.flatMap((page) => page.ads) ?? []
+  const ads = rawAds.map(normalizeLinkedInAd)
   const totalAds = data?.pages[0]?.totalAds
 
   const hasAnyInput =
@@ -80,6 +81,8 @@ export function LinkedInAdsPanel() {
       {!isLoading && !isError && data && ads.length > 0 && (
         <AdsResults
           ads={ads}
+          rawAds={rawAds}
+          platform="LinkedIn"
           total={totalAds}
           resetKey={submittedParams}
           hasNextPage={hasNextPage}

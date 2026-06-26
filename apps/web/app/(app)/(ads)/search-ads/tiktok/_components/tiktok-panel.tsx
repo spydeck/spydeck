@@ -39,7 +39,8 @@ export function TikTokAdsPanel() {
     enabled: !!submittedParams,
   })
 
-  const ads = (data?.pages.flatMap((page) => page.ads) ?? []).map(normalizeTikTokAd)
+  const rawAds = data?.pages.flatMap((page) => page.ads) ?? []
+  const ads = rawAds.map(normalizeTikTokAd)
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -69,6 +70,8 @@ export function TikTokAdsPanel() {
       {!isLoading && !isError && data && ads.length > 0 && (
         <AdsResults
           ads={ads}
+          rawAds={rawAds}
+          platform="TikTok"
           resetKey={submittedParams}
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}

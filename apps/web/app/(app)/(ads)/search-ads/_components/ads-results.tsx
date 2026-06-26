@@ -6,19 +6,27 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSavedAds } from "../../swipe-ads/_components/use-saved-ads"
+import { GoogleAdsTable } from "../google/_components/google-ads-table"
+import type { GoogleAd } from "../google/_components/google-ad"
+import { LinkedInAdsTable } from "../linkedin/_components/linkedin-ads-table"
+import type { LinkedInAd } from "../linkedin/_components/linkedin-ad"
+import { MetaAdsTable } from "../meta/_components/meta-ads-table"
+import type { MetaAdResult } from "../meta/_components/meta-ad"
+import { TikTokAdsTable } from "../tiktok/_components/tiktok-ads-table"
+import type { TikTokAd } from "../tiktok/_components/tiktok-ad"
 import { AdCard } from "./ad-card"
-import { AdsTable } from "./ads-table"
 import { toAdResult, type NormalizedAd } from "./normalized-ad"
 
-export function AdsResults({
-  ads,
-  total,
-  resetKey,
-  hasNextPage,
-  isFetchingNextPage,
-  onLoadMore,
-}: {
+type PlatformTableProps = {
+  selectedIds: Set<string>
+  onToggleSelect: (id: string) => void
+  onSelectAll: (ids: string[], checked: boolean) => void
+}
+
+type AdsResultsProps<TRaw> = {
   ads: NormalizedAd[]
+  rawAds: TRaw[]
+  platform: NormalizedAd["platform"]
   /** Total available results across all pages (when the API reports it). */
   total?: number
   /** When this value changes, the current selection is cleared (e.g. a new search). */
@@ -26,7 +34,18 @@ export function AdsResults({
   hasNextPage?: boolean
   isFetchingNextPage?: boolean
   onLoadMore?: () => void
-}) {
+}
+
+export function AdsResults<TRaw>({
+  ads,
+  rawAds,
+  platform,
+  total,
+  resetKey,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
+}: AdsResultsProps<TRaw>) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { saveAd } = useSavedAds()
 
@@ -71,6 +90,12 @@ export function AdsResults({
     setSelectedIds(new Set())
   }
 
+  const tableProps: PlatformTableProps = {
+    selectedIds,
+    onToggleSelect: toggleSelect,
+    onSelectAll: toggleSelectAll,
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Tabs defaultValue="cards">
@@ -79,15 +104,21 @@ export function AdsResults({
           <TabsTrigger value="cards">Cards</TabsTrigger>
         </TabsList>
         <TabsContent value="table" className="mt-4">
-          <AdsTable
-            ads={ads}
-            selectedIds={selectedIds}
-            onToggleSelect={toggleSelect}
-            onSelectAll={toggleSelectAll}
-          />
+          {platform === "Google" && (
+            <GoogleAdsTable ads={rawAds as GoogleAd[]} {...tableProps} />
+          )}
+          {platform === "Meta" && (
+            <MetaAdsTable ads={rawAds as MetaAdResult[]} {...tableProps} />
+          )}
+          {platform === "TikTok" && (
+            <TikTokAdsTable ads={rawAds as TikTokAd[]} {...tableProps} />
+          )}
+          {platform === "LinkedIn" && (
+            <LinkedInAdsTable ads={rawAds as LinkedInAd[]} {...tableProps} />
+          )}
         </TabsContent>
         <TabsContent value="cards" className="mt-4">
-          <div className="gap-4 columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5">
+          <div className="gap-4 columns-1 sm:columns-2 md:columns-3 lg:columns-4 2xl:columns-5">
             {ads.map((ad) => (
               <AdCard key={ad.id} ad={ad} />
             ))}
