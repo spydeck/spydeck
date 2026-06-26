@@ -25,7 +25,10 @@ export const EMPTY_DATE_RANGE: DateRange = { from: "", to: "" }
 // All presets are calendar-aligned so they agree with "previous quarter".
 // "this *" run from the period start to today; "last *" are the full prior period.
 const PRESETS: { label: string; compute: (today: Date) => DateRange }[] = [
+  { label: "Today", compute: todayRange },
+  { label: "This week", compute: thisWeek },
   { label: "Last week", compute: lastWeek },
+  { label: "This month", compute: thisMonth },
   { label: "Last month", compute: lastMonth },
   { label: "This quarter", compute: thisQuarter },
   { label: "Previous quarter", compute: previousQuarter },
@@ -162,6 +165,23 @@ function formatLabel(value: string): string {
   return d
     ? d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
     : value
+}
+
+function todayRange(today: Date): DateRange {
+  const d = fmt(today)
+  return { from: d, to: d }
+}
+
+// Start of the current calendar week (Monday) through today.
+function thisWeek(today: Date): DateRange {
+  const daysSinceMonday = (today.getDay() + 6) % 7
+  return { from: fmt(addDays(today, -daysSinceMonday)), to: fmt(today) }
+}
+
+// Start of the current month through today.
+function thisMonth(today: Date): DateRange {
+  const first = new Date(today.getFullYear(), today.getMonth(), 1)
+  return { from: fmt(first), to: fmt(today) }
 }
 
 // Previous full calendar week, Monday–Sunday.

@@ -2,37 +2,75 @@
 
 import { useMemo } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
+import { format, parseISO } from "date-fns"
+import { Trash2Icon } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/ui/data-table"
 import { AdThumbnail } from "../../search-ads/_components/ad-thumbnail"
-import { SaveAdButton } from "../../search-ads/_components/save-ad-button"
 import { ViewDetailsButton } from "../../search-ads/_components/view-details-button"
-import type { NormalizedAd } from "../../search-ads/_components/normalized-ad"
+import type { SwipeAdRow } from "./use-saved-ads"
+import type { SwipeCategory } from "./use-categories"
 
 export function SwipeAdsTable({
-  ads,
+  rows,
+  categories,
+  selectedIds,
+  onToggleSelect,
+  onSelectAll,
   onViewDetails,
+  onRemove,
 }: {
-  ads: NormalizedAd[]
+  rows: SwipeAdRow[]
+  categories: SwipeCategory[]
+  selectedIds: Set<string>
+  onToggleSelect: (id: string) => void
+  onSelectAll: (ids: string[], checked: boolean) => void
   onViewDetails: (id: string) => void
+  onRemove: (id: string) => void
 }) {
-  const columns = useMemo<ColumnDef<NormalizedAd>[]>(
-    () => [
+  const categoryById = useMemo(
+    () => new Map(categories.map((c) => [c.id, c])),
+    [categories]
+  )
+
+  const columns = useMemo<ColumnDef<SwipeAdRow>[]>(() => {
+    const allSelected =
+      rows.length > 0 && rows.every((r) => selectedIds.has(r.ad.id))
+    const someSelected = rows.some((r) => selectedIds.has(r.ad.id))
+    return [
       {
-        id: "thumbnail",
+        id: "select",
         enableSorting: false,
-        size: 80,
-        header: "Thumbnail",
-        cell: ({ row }) => <AdThumbnail ad={row.original} />,
+        enableResizing: false,
+        size: 44,
+        header: () => (
+          <Checkbox
+            checked={allSelected ? true : someSelected ? "indeterminate" : false}
+            aria-label="Select all ads"
+            onCheckedChange={(c) =>
+              onSelectAll(rows.map((r) => r.ad.id), c === true)
+            }
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={selectedIds.has(row.original.ad.id)}
+            aria-label="Select ad"
+            onCheckedChange={() => onToggleSelect(row.original.ad.id)}
+          />
+        ),
       },
       {
         id: "advertiser",
-        accessorFn: (ad) => ad.advertiser,
-        size: 220,
+        accessorFn: (r) => r.ad.advertiser,
+        size: 200,
         minSize: 140,
         header: "Advertiser",
         cell: ({ row }) => {
-          const ad = row.original
+          const ad = row.original.ad
           return (
             <div className="flex items-center gap-2">
               <Avatar className="size-8 rounded-md">
@@ -53,83 +91,114 @@ export function SwipeAdsTable({
       },
       {
         id: "ad",
-        accessorFn: (ad) => ad.headline ?? ad.description ?? "",
-        size: 340,
-        minSize: 160,
+        accessorFn: (r) => r.ad.headline ?? r.ad.description ?? "",
+        size: 360,
+        minSize: 180,
         header: "Ad",
         cell: ({ row }) => {
-          const ad = row.original
+          const ad = row.original.ad
           return (
-            <div className="max-w-md min-w-0">
+            <div className="w-[340px] max-w-full">
               {ad.headline && (
-                <p className="font-medium text-foreground line-clamp-1">{ad.headline}</p>
+                <p className="truncate font-medium text-foreground">{ad.headline}</p>
               )}
               {ad.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
+                <p className="truncate text-xs text-muted-foreground">
                   {ad.description}
                 </p>
               )}
+              {!ad.headline && !ad.description && (
+                <span className="text-muted-foreground">–</span>
+              )}
             </div>
           )
         },
       },
       {
-        id: "date",
-        accessorFn: (ad) => ad.dateLabel ?? "",
-        size: 150,
-        minSize: 110,
-        header: "Date",
-        cell: ({ row }) => (
-          <span className="whitespace-nowrap text-muted-foreground">
-            {row.original.dateLabel ?? "–"}
-          </span>
-        ),
-      },
-      {
-        id: "stats",
-        enableSorting: false,
-        size: 160,
+        id: "createdAt",
+        accessorFn: (r) => r.createdAt,
+        size: 140,
         minSize: 120,
-        header: "Stats",
+        header: "Date added",
         cell: ({ row }) => {
-          const stats = row.original.stats
-          if (!stats || stats.length === 0) return "–"
+          const d = parseISO(row.original.createdAt)
           return (
-            <div className="whitespace-nowrap text-xs text-muted-foreground">
-              {stats.map((s) => (
-                <div key={s.label}>
-                  {s.label}:{" "}
-                  <span className="font-medium text-foreground">{s.value}</span>
-                </div>
-              ))}
-            </div>
+            <span className="whitespace-nowrap text-sm text-muted-foreground">
+              {isNaN(d.getTime()) ? "–" : format(d, "dd/MM/yyyy")}
+            </span>
           )
         },
+      },
+      {
+        id: "category",
+        accessorFn: (r) =>
+          (r.categoryId && categoryById.get(r.categoryId)?.name) || "",
+        size: 150,
+        minSize: 120,
+        header: "Category",
+        cell: ({ row }) => {
+          const cat = row.original.categoryId
+            ? categoryById.get(row.original.categoryId)
+            : undefined
+          if (!cat) return <span className="text-muted-foreground">–</span>
+          return (
+            <Badge variant="secondary" className="gap-1.5 font-normal">
+              <span
+                className="size-2 shrink-0 rounded-full border"
+                style={cat.color ? { backgroundColor: cat.color } : undefined}
+              />
+              {cat.name}
+            </Badge>
+          )
+        },
+      },
+      {
+        id: "thumbnail",
+        enableSorting: false,
+        enableResizing: false,
+        size: 72,
+        header: "",
+        cell: ({ row }) => <AdThumbnail ad={row.original.ad} />,
       },
       {
         id: "actions",
         enableSorting: false,
         enableResizing: false,
         size: 96,
-        header: () => null,
+        header: "",
         cell: ({ row }) => (
           <div className="flex items-center gap-1">
             <ViewDetailsButton
-              externalId={row.original.id}
+              externalId={row.original.ad.id}
               persisted
               onView={onViewDetails}
             />
-            <SaveAdButton ad={row.original} />
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Remove from Swipe Ads"
+              className="size-8 text-muted-foreground hover:text-destructive"
+              onClick={() => onRemove(row.original.ad.id)}
+            >
+              <Trash2Icon className="size-4" />
+            </Button>
           </div>
         ),
       },
-    ],
-    [onViewDetails]
-  )
+    ]
+  }, [
+    rows,
+    selectedIds,
+    onToggleSelect,
+    onSelectAll,
+    onViewDetails,
+    onRemove,
+    categoryById,
+  ])
 
   return (
     <div className="overflow-x-auto rounded-xl border">
-      <DataTable columns={columns} data={ads} enableColumnResizing />
+      <DataTable columns={columns} data={rows} enableColumnResizing />
     </div>
   )
 }

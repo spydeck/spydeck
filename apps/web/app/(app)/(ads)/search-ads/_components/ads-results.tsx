@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { BookmarkIcon, FileSearchIcon, XIcon } from "lucide-react"
+import { FileSearchIcon, XIcon } from "lucide-react"
 import { toast } from "sonner"
 import { apiFetch } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useSavedAds } from "../../swipe-ads/_components/use-saved-ads"
+import { AddToSwipeButton } from "../../swipe-ads/_components/add-to-swipe-button"
 import { AdDetailSidebar } from "./ad-detail-sidebar"
 import { GoogleAdsTable } from "../google/_components/google-ads-table"
 import type { GoogleAd } from "../google/_components/google-ad"
@@ -58,7 +58,6 @@ export function AdsResults<TRaw>({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [fetchingDetails, setFetchingDetails] = useState(false)
   const [detailAd, setDetailAd] = useState<NormalizedAd | null>(null)
-  const { saveAd } = useSavedAds()
   const queryClient = useQueryClient()
 
   // Which of the shown ads already have a persisted detail (so rows are marked).
@@ -111,15 +110,7 @@ export function AdsResults<TRaw>({
     })
   }
 
-  function handleAddSelectedToSwipe() {
-    const selected = ads.filter((ad) => selectedIds.has(ad.id))
-    if (selected.length === 0) return
-    for (const ad of selected) saveAd(ad)
-    toast.success(
-      `Added ${selected.length} ad${selected.length > 1 ? "s" : ""} to Swipe Ads`
-    )
-    setSelectedIds(new Set())
-  }
+  const selectedAds = ads.filter((ad) => selectedIds.has(ad.id))
 
   async function handleFetchDetails() {
     const requests = ads
@@ -221,10 +212,10 @@ export function AdsResults<TRaw>({
             >
               <XIcon />
             </Button>
-            <Button size="sm" onClick={handleAddSelectedToSwipe}>
-              <BookmarkIcon data-icon="inline-start" />
-              Add to Swipe Ads
-            </Button>
+            <AddToSwipeButton
+              ads={selectedAds}
+              onDone={() => setSelectedIds(new Set())}
+            />
             <Button
               size="sm"
               variant="secondary"
