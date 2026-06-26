@@ -4,6 +4,18 @@ A powerful self-hosted swipe file and ad database for creators, marketers, and r
 
 ---
 
+## Why Spydeck?
+
+Enterprise creator tracking and ad library tools like **Favikon** or **Modash** can be prohibitively expensive, with subscriptions ranging between **€100 to €200/month**.
+
+Spydeck is designed as a cost-effective, self-hosted alternative that can be run for a fraction of that cost:
+* **Hosting:** Run it on a budget cloud provider like Hetzner (approx. **€20/month**).
+* **Creator Data:** Uses the **ScrapeCreators API** (free tier includes 1,000 credits; paid tier is €43 for 25,000 credits).
+* **Ad Data:** Integrates with **Apify** (utilizing their free $10/month tier).
+* **Total Cost:** Under **€30 to €60/month** for a private, dedicated system that you own and run without user seat caps or pricing tiers.
+
+---
+
 ## Visual Overview
 
 ### Track and Organize Content Creators
