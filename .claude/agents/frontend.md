@@ -34,6 +34,7 @@ This project has the **next-devtools MCP** (`next-devtools` server in `.mcp.json
 
 ## Conventions
 
+- **File size limit: no page or component file may exceed 250 lines of code.** When a file approaches the limit, split it into smaller components/modules — extract sub-components, hooks, shared types, and pure helpers into their own files (colocate them in the same `_components/` directory). Prefer one component per file. Keep the orchestrating page/panel thin: it wires data and state, while presentational pieces (forms, cards, tables, dialogs, empty/loading states) live in dedicated files. This applies to new work and to any file you meaningfully edit.
 - The web app runs on port **3000** (`pnpm --filter web dev`). The NestJS API is at port **4000** — fetch backend data from there.
 - `@repo/ui` ships raw `.tsx` (no build step); edits are picked up directly by `web`.
 - Run `pnpm --filter web check-types` and `pnpm --filter web lint` (max-warnings 0) before declaring work done.
