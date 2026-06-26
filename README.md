@@ -179,4 +179,5 @@ All user-facing strings must be in **English**.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+AGPL-3.0 — see [LICENSE.md](./LICENSE.md).
+
