@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { MetaPlatformIcons } from "./meta-platform-icons"
 import { SaveAdButton } from "./save-ad-button"
@@ -18,6 +18,9 @@ export function AdCard({ ad }: { ad: NormalizedAd }) {
       {/* Author header */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <Avatar className="size-8 rounded-md">
+          {ad.advertiserLogo && (
+            <AvatarImage src={ad.advertiserLogo} alt={ad.advertiser} />
+          )}
           <AvatarFallback className="rounded-md bg-muted text-xs font-semibold">
             {ad.advertiser.charAt(0).toUpperCase()}
           </AvatarFallback>

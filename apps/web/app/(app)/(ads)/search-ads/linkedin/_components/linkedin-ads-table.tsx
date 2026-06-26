@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/ui/data-table"
 import { AdThumbnail } from "../../_components/ad-thumbnail"
@@ -94,9 +94,11 @@ export function LinkedInAdsTable({
         header: "Advertiser",
         cell: ({ row }) => {
           const name = row.original.advertiser || row.original.poster || "Advertiser"
+          const logo = row.original.advertiserLogo
           return (
             <div className="flex items-center gap-2">
               <Avatar className="size-8 rounded-md">
+                {logo && <AvatarImage src={logo} alt={name} />}
                 <AvatarFallback className="rounded-md bg-muted text-xs font-semibold">
                   {name.charAt(0).toUpperCase()}
                 </AvatarFallback>

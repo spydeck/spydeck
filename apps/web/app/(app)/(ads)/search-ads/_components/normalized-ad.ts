@@ -11,6 +11,7 @@ export interface NormalizedAd {
   id: string
   platform: AdPlatform
   advertiser: string
+  advertiserLogo?: string | null
   subtitle?: string | null
   headline?: string | null
   description?: string | null

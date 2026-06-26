@@ -277,6 +277,23 @@ export const metaCompanies = pgTable('meta_companies', {
     .notNull(),
 });
 
+// LinkedIn companies seen in company searches, keyed by numeric company id.
+// Lets ad results show the company logo (LinkedIn ads carry no advertiser logo).
+export const linkedinCompanies = pgTable('linkedin_companies', {
+  companyId: text('company_id').primaryKey(),
+  name: text('name').notNull(),
+  logo: text('logo'),
+  url: text('url'),
+  industry: text('industry'),
+  location: text('location'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // Durable cache of LinkedIn company searches (Apify is metered, so we persist
 // results by query to keep API calls to a minimum across restarts/evictions).
 export const linkedinCompanySearches = pgTable('linkedin_company_searches', {
@@ -347,3 +364,5 @@ export type NewLinkedinCompanySearch =
   typeof linkedinCompanySearches.$inferInsert;
 export type MetaCompany = typeof metaCompanies.$inferSelect;
 export type NewMetaCompany = typeof metaCompanies.$inferInsert;
+export type LinkedinCompany = typeof linkedinCompanies.$inferSelect;
+export type NewLinkedinCompany = typeof linkedinCompanies.$inferInsert;

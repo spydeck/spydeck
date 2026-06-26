@@ -9,6 +9,7 @@ export interface LinkedInAd {
   adType?: string
   advertiser?: string
   advertiserLinkedinPage?: string | null
+  advertiserLogo?: string | null
   cta?: string | null
   destinationUrl?: string | null
   image?: string | null
@@ -33,6 +34,7 @@ export function normalizeLinkedInAd(ad: LinkedInAd): NormalizedAd {
     id: ad.id,
     platform: "LinkedIn",
     advertiser: ad.advertiser || ad.poster || "Advertiser",
+    advertiserLogo: ad.advertiserLogo ?? null,
     subtitle: ad.posterTitle ?? "Promoted",
     headline: ad.headline ?? null,
     description: ad.description ?? null,

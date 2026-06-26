@@ -78,6 +78,13 @@
       "when": 1782504111960,
       "tag": "0010_chubby_zeigeist",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1782504599099,
+      "tag": "0011_minor_donald_blake",
+      "breakpoints": true
     }
   ]
 }

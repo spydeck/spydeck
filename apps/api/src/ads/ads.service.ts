@@ -6,6 +6,7 @@ import { DB } from '../db/database.module';
 import type { DrizzleDB } from '../db/database.module';
 import {
   linkedinCompanySearches,
+  linkedinCompanies as linkedinCompaniesTable,
   metaCompanies as metaCompaniesTable,
 } from '../db/schema';
 import {
@@ -68,6 +69,17 @@ export interface MetaAdRaw {
   [k: string]: unknown;
 }
 
+export interface LinkedInAdRaw {
+  advertiserLinkedinPage?: string;
+  advertiserLogo?: string;
+  [k: string]: unknown;
+}
+
+// Numeric company id from a LinkedIn company page URL (…/company/1035).
+function linkedinCompanyId(url?: string): string | null {
+  return url?.match(/\/company\/(\d+)/)?.[1] ?? null;
+}
+
 @Injectable()
 export class AdsService {
   private readonly logger = new Logger(AdsService.name);
@@ -122,6 +134,33 @@ export class AdsService {
         target: linkedinCompanySearches.query,
         set: { results: companies, updatedAt: new Date() },
       });
+
+    // Persist individual companies by id so ad results can render their logos.
+    await Promise.all(
+      companies.map((c) =>
+        this.db
+          .insert(linkedinCompaniesTable)
+          .values({
+            companyId: c.companyId,
+            name: c.name,
+            logo: c.logo,
+            url: c.url,
+            industry: c.industry,
+            location: c.location,
+          })
+          .onConflictDoUpdate({
+            target: linkedinCompaniesTable.companyId,
+            set: {
+              name: c.name,
+              logo: c.logo,
+              url: c.url,
+              industry: c.industry,
+              location: c.location,
+              updatedAt: new Date(),
+            },
+          }),
+      ),
+    );
 
     return { companies };
   }
@@ -220,8 +259,40 @@ export class AdsService {
     return this.client.request('/v1/tiktok/ad-library/search', { ...p });
   }
 
-  linkedinAds(p: LinkedInAdsDto) {
-    return this.client.request('/v1/linkedin/ads/search', { ...p });
+  async linkedinAds(p: LinkedInAdsDto) {
+    const res = await this.client.request<{ ads?: LinkedInAdRaw[] }>(
+      '/v1/linkedin/ads/search',
+      { ...p },
+    );
+    await this.applyLinkedinLogos(res.ads ?? []);
+    return res;
+  }
+
+  // LinkedIn ads carry no advertiser logo, so attach the stored company logo
+  // (matched by the numeric id in advertiserLinkedinPage) when we have one.
+  private async applyLinkedinLogos(ads: LinkedInAdRaw[]): Promise<void> {
+    const ids = [
+      ...new Set(
+        ads.map((a) => linkedinCompanyId(a.advertiserLinkedinPage)).filter(Boolean),
+      ),
+    ] as string[];
+    if (ids.length === 0) return;
+    const rows = await this.db
+      .select({
+        companyId: linkedinCompaniesTable.companyId,
+        logo: linkedinCompaniesTable.logo,
+      })
+      .from(linkedinCompaniesTable)
+      .where(inArray(linkedinCompaniesTable.companyId, ids));
+    const logoById = new Map(
+      rows.filter((r) => r.logo).map((r) => [r.companyId, r.logo as string]),
+    );
+    if (logoById.size === 0) return;
+    for (const ad of ads) {
+      const id = linkedinCompanyId(ad.advertiserLinkedinPage);
+      const logo = id ? logoById.get(id) : undefined;
+      if (logo) ad.advertiserLogo = logo;
+    }
   }
 }
 

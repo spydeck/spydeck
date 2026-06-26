@@ -39,6 +39,8 @@ export interface MetaAdResult {
     extra_videos?: MetaVideo[]
     link_url?: string
     page_name?: string
+    page_id?: string
+    page_profile_picture_url?: string
   }
 }
 
@@ -98,6 +100,7 @@ export function normalizeMetaAd(ad: MetaAdResult): NormalizedAd {
     id: ad.ad_archive_id,
     platform: "Meta",
     advertiser: snap.page_name || ad.page_name || "Advertiser",
+    advertiserLogo: snap.page_profile_picture_url ?? null,
     subtitle: ad.is_active ? "Active" : "Inactive",
     headline: snap.title ?? null,
     description: snap.body?.text ?? null,

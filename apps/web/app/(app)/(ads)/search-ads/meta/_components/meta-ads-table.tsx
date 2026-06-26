@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import type { ColumnDef } from "@tanstack/react-table"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/ui/data-table"
@@ -83,9 +83,11 @@ export function MetaAdsTable({
             row.original.snapshot?.page_name ||
             row.original.page_name ||
             "Advertiser"
+          const logo = row.original.snapshot?.page_profile_picture_url
           return (
             <div className="flex items-center gap-2">
               <Avatar className="size-8 rounded-md">
+                {logo && <AvatarImage src={logo} alt={name} />}
                 <AvatarFallback className="rounded-md bg-muted text-xs font-semibold">
                   {name.charAt(0).toUpperCase()}
                 </AvatarFallback>
