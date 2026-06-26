@@ -18,9 +18,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/lib/auth";
 import {
-  BellIcon,
   CircleUserRoundIcon,
-  CreditCardIcon,
   EllipsisVerticalIcon,
   LogOutIcon,
 } from "lucide-react";
@@ -95,14 +93,6 @@ export function NavUser({
                   <CircleUserRoundIcon />
                   Account
                 </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
