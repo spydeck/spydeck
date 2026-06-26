@@ -14,6 +14,7 @@ import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module';
 import { ApifyModule } from './apify/apify.module';
 import { SyncModule } from './sync/sync.module';
 import { AdsModule } from './ads/ads.module';
+import { SwipeAdsModule } from './swipe-ads/swipe-ads.module';
 
 const CACHE_TTL_MS = 3_600_000; // 1 hour
 
@@ -56,6 +57,7 @@ const CACHE_TTL_MS = 3_600_000; // 1 hour
     ApifyModule,
     SyncModule,
     AdsModule,
+    SwipeAdsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

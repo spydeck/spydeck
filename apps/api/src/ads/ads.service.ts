@@ -70,6 +70,7 @@ export interface MetaAdRaw {
 }
 
 export interface LinkedInAdRaw {
+  advertiser?: string;
   advertiserLinkedinPage?: string;
   advertiserLogo?: string;
   [k: string]: unknown;
@@ -79,6 +80,9 @@ export interface LinkedInAdRaw {
 function linkedinCompanyId(url?: string): string | null {
   return url?.match(/\/company\/(\d+)/)?.[1] ?? null;
 }
+
+// Cap auto-fetches of company logos per ad search to bound ScrapeCreators cost.
+const MAX_LINKEDIN_LOGO_FETCHES = 12;
 
 @Injectable()
 export class AdsService {
@@ -264,8 +268,71 @@ export class AdsService {
       '/v1/linkedin/ads/search',
       { ...p },
     );
-    await this.applyLinkedinLogos(res.ads ?? []);
+    const ads = res.ads ?? [];
+    await this.ensureLinkedinCompanyLogos(ads);
+    await this.applyLinkedinLogos(ads);
     return res;
+  }
+
+  // LinkedIn ads carry no advertiser logo. For companies we don't have a logo
+  // for yet, fetch it once from the company endpoint and persist it.
+  private async ensureLinkedinCompanyLogos(ads: LinkedInAdRaw[]): Promise<void> {
+    const byId = new Map<string, { url: string; advertiser?: string }>();
+    for (const ad of ads) {
+      const id = linkedinCompanyId(ad.advertiserLinkedinPage);
+      if (id && ad.advertiserLinkedinPage && !byId.has(id)) {
+        byId.set(id, { url: ad.advertiserLinkedinPage, advertiser: ad.advertiser });
+      }
+    }
+    if (byId.size === 0) return;
+
+    const existing = await this.db
+      .select({
+        companyId: linkedinCompaniesTable.companyId,
+        logo: linkedinCompaniesTable.logo,
+      })
+      .from(linkedinCompaniesTable)
+      .where(inArray(linkedinCompaniesTable.companyId, [...byId.keys()]));
+    const have = new Set(existing.filter((r) => r.logo).map((r) => r.companyId));
+
+    const missing = [...byId.entries()]
+      .filter(([id]) => !have.has(id))
+      .slice(0, MAX_LINKEDIN_LOGO_FETCHES);
+    if (missing.length === 0) return;
+
+    await Promise.all(
+      missing.map(async ([id, info]) => {
+        try {
+          const c = await this.client.request<{
+            logo?: string;
+            name?: string;
+            industry?: string;
+          }>('/v1/linkedin/company', { url: info.url });
+          if (!c?.logo) return;
+          await this.db
+            .insert(linkedinCompaniesTable)
+            .values({
+              companyId: id,
+              name: c.name ?? info.advertiser ?? id,
+              logo: c.logo,
+              url: info.url,
+              industry: c.industry ?? null,
+            })
+            .onConflictDoUpdate({
+              target: linkedinCompaniesTable.companyId,
+              set: {
+                logo: c.logo,
+                industry: c.industry ?? null,
+                updatedAt: new Date(),
+              },
+            });
+        } catch (err) {
+          this.logger.warn(
+            `linkedin company logo fetch failed for ${id}: ${(err as Error).message}`,
+          );
+        }
+      }),
+    );
   }
 
   // LinkedIn ads carry no advertiser logo, so attach the stored company logo

@@ -82,6 +82,42 @@ export const swipeFiles = pgTable('swipe_files', {
     .notNull(),
 });
 
+// User-defined categories for organizing swipe ads.
+export const swipeAdsCategories = pgTable('swipe_ads_categories', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(),
+  color: text('color'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// Saved ("swiped") ads, persisted server-side. `ad` holds the full NormalizedAd
+// view model; one row per external ad id.
+export const swipeAds = pgTable('swipe_ads', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  adId: text('ad_id').notNull().unique(),
+  ad: jsonb('ad').$type<unknown>().notNull(),
+  // Where the ad came from: saved manually or ingested from Telegram.
+  source: text('source')
+    .$type<'manual' | 'telegram'>()
+    .notNull()
+    .default('manual'),
+  categoryId: uuid('category_id').references(() => swipeAdsCategories.id, {
+    onDelete: 'set null',
+  }),
+  // Date the ad was added.
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 // ponytail: key/value is enough for now; typed settings table if values diverge
 export const settings = pgTable('settings', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -350,6 +386,10 @@ export type NewAuthor = typeof authors.$inferInsert;
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
 export type SwipeFile = typeof swipeFiles.$inferSelect;
+export type SwipeAdsCategory = typeof swipeAdsCategories.$inferSelect;
+export type NewSwipeAdsCategory = typeof swipeAdsCategories.$inferInsert;
+export type SwipeAd = typeof swipeAds.$inferSelect;
+export type NewSwipeAd = typeof swipeAds.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type AuthorProfile = typeof authorsProfiles.$inferSelect;
 export type NewAuthorProfile = typeof authorsProfiles.$inferInsert;
