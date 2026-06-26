@@ -217,6 +217,47 @@ export const authorSyncConfigs = pgTable(
   ],
 );
 
+// Ad-library platforms differ from the social platforms above (no Instagram/X),
+// so they get their own enum.
+export const adPlatformEnum = pgEnum('ad_platform', [
+  'linkedin',
+  'meta',
+  'tiktok',
+  'google',
+]);
+
+// Persisted ad detail fetched by the sync `ad-detail-extract` queue. One row per
+// (platform, externalId); re-fetching upserts. `detail` keeps the full raw
+// ScrapeCreators payload — the shape differs per platform and isn't worth
+// normalizing until a query pattern demands it.
+export const adDetails = pgTable(
+  'ad_details',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    platform: adPlatformEnum('platform').notNull(),
+    // Stable ad identifier (LinkedIn/Meta/TikTok ad id, Google creativeId).
+    externalId: text('external_id').notNull(),
+    // What was used to fetch it: ad URL (LinkedIn/Google) or ad id (Meta/TikTok).
+    sourceUrl: text('source_url'),
+    detail: jsonb('detail').$type<unknown>(),
+    fetchedAt: timestamp('fetched_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique('ad_details_platform_external_id_unique').on(
+      table.platform,
+      table.externalId,
+    ),
+  ],
+);
+
 export const authorsRelations = relations(authors, ({ many }) => ({
   profiles: many(authorsProfiles),
   syncConfigs: many(authorSyncConfigs),
@@ -265,3 +306,5 @@ export type AuthorProfileLink = typeof authorsProfileLinks.$inferSelect;
 export type NewAuthorProfileLink = typeof authorsProfileLinks.$inferInsert;
 export type AuthorSyncConfig = typeof authorSyncConfigs.$inferSelect;
 export type NewAuthorSyncConfig = typeof authorSyncConfigs.$inferInsert;
+export type AdDetail = typeof adDetails.$inferSelect;
+export type NewAdDetail = typeof adDetails.$inferInsert;

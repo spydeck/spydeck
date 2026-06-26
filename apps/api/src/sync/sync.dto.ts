@@ -22,6 +22,11 @@ export class AdDetailExtractDto {
   @IsIn(['linkedin', 'meta', 'tiktok', 'google'])
   platform!: 'linkedin' | 'meta' | 'tiktok' | 'google';
 
+  // Stable ad id, used as the persistence key.
+  @IsString()
+  @IsNotEmpty()
+  externalId!: string;
+
   // LinkedIn and Google details are fetched by ad URL; Meta and TikTok by ad id.
   @ValidateIf(
     (o: AdDetailExtractDto) =>
@@ -37,6 +42,22 @@ export class AdDetailExtractDto {
   @IsString()
   @IsNotEmpty()
   adId?: string;
+}
+
+export class AdDetailBatchDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AdDetailExtractDto)
+  ads!: AdDetailExtractDto[];
+}
+
+export class AdDetailLookupDto {
+  @IsIn(['linkedin', 'meta', 'tiktok', 'google'])
+  platform!: 'linkedin' | 'meta' | 'tiktok' | 'google';
+
+  @IsArray()
+  @IsString({ each: true })
+  externalIds!: string[];
 }
 
 export class SyncConfigItemDto {

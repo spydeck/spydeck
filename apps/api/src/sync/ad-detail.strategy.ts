@@ -5,6 +5,8 @@ export type AdPlatform = 'linkedin' | 'meta' | 'tiktok' | 'google';
 
 export interface AdDetailPayload {
   platform: AdPlatform;
+  /** Stable ad identifier used as the persistence key (upsert target). */
+  externalId: string;
   /** The ad's public URL — used by LinkedIn and Google. */
   url?: string;
   /** The ad's archive/material id — used by Meta and TikTok. */

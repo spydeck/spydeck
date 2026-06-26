@@ -1,13 +1,13 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { DB } from '../db/database.module';
 import type { DrizzleDB } from '../db/database.module';
-import { authorSyncConfigs } from '../db/schema';
+import { adDetails, authorSyncConfigs } from '../db/schema';
 import { ProfileExtractPayload } from './profile-extract.processor';
 import type { SyncPostsPayload } from './sync-posts.processor';
-import type { AdDetailPayload } from './ad-detail.strategy';
+import type { AdDetailPayload, AdPlatform } from './ad-detail.strategy';
 import type { SyncConfigItemDto } from './sync.dto';
 
 @Injectable()
@@ -94,6 +94,56 @@ export class SyncService {
       );
       throw err;
     }
+  }
+
+  async enqueueAdDetailExtractBatch(
+    payloads: AdDetailPayload[],
+  ): Promise<{ enqueued: number }> {
+    if (payloads.length === 0) return { enqueued: 0 };
+    try {
+      const jobs = payloads.map((payload) => ({
+        name: 'ad-detail-extract',
+        data: payload,
+        opts: { attempts: 3, backoff: { type: 'exponential', delay: 2000 } },
+      }));
+      await this.adDetailQueue.addBulk(jobs);
+      this.logger.log(`enqueued ${payloads.length} ad-detail-extract job(s)`);
+      return { enqueued: payloads.length };
+    } catch (err) {
+      this.logger.error(
+        `failed to enqueue ad-detail-extract batch (${payloads.length} ads)`,
+        (err as Error).stack,
+      );
+      throw err;
+    }
+  }
+
+  getAdDetail(platform: AdPlatform, externalId: string) {
+    return this.db.query.adDetails.findFirst({
+      where: and(
+        eq(adDetails.platform, platform),
+        eq(adDetails.externalId, externalId),
+      ),
+    });
+  }
+
+  // Returns the subset of externalIds that already have a persisted detail,
+  // so the UI can mark which rows are clickable.
+  async getPersistedAdIds(
+    platform: AdPlatform,
+    externalIds: string[],
+  ): Promise<string[]> {
+    if (externalIds.length === 0) return [];
+    const rows = await this.db
+      .select({ externalId: adDetails.externalId })
+      .from(adDetails)
+      .where(
+        and(
+          eq(adDetails.platform, platform),
+          inArray(adDetails.externalId, externalIds),
+        ),
+      );
+    return rows.map((r) => r.externalId);
   }
 
   async saveSyncConfigs(authorId: string, items: SyncConfigItemDto[]) {
