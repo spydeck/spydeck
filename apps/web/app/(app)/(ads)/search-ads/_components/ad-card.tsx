@@ -4,6 +4,7 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
+import { MetaPlatformIcons } from "./meta-platform-icons"
 import { SaveAdButton } from "./save-ad-button"
 import type { NormalizedAd } from "./normalized-ad"
 
@@ -98,9 +99,13 @@ export function AdCard({ ad }: { ad: NormalizedAd }) {
       {ad.stats && ad.stats.length > 0 && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t px-4 py-2 text-xs text-muted-foreground">
           {ad.stats.map((stat) => (
-            <span key={stat.label} className="flex items-center gap-1">
+            <span key={stat.label} className="flex items-center gap-1.5">
               <span>{stat.label}</span>
-              <span className="font-medium text-foreground">{stat.value}</span>
+              {ad.platform === "Meta" && stat.label === "Platforms" ? (
+                <MetaPlatformIcons value={stat.value} />
+              ) : (
+                <span className="font-medium text-foreground">{stat.value}</span>
+              )}
             </span>
           ))}
         </div>
