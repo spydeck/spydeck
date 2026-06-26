@@ -20,7 +20,6 @@ import type { TikTokAd } from "../tiktok/_components/tiktok-ad"
 import { AdCard } from "./ad-card"
 import {
   toAdDetailRequest,
-  toAdResult,
   type AdDetailRequest,
   type NormalizedAd,
 } from "./normalized-ad"
@@ -115,7 +114,7 @@ export function AdsResults<TRaw>({
   function handleAddSelectedToSwipe() {
     const selected = ads.filter((ad) => selectedIds.has(ad.id))
     if (selected.length === 0) return
-    for (const ad of selected) saveAd(toAdResult(ad))
+    for (const ad of selected) saveAd(ad)
     toast.success(
       `Added ${selected.length} ad${selected.length > 1 ? "s" : ""} to Swipe Ads`
     )
