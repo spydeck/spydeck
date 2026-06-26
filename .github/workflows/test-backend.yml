@@ -1,0 +1,46 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Backend Tests
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: postgresql://localhost:5432/test
+      JWT_SECRET: test-secret-key
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        run: pnpm --filter api lint
+
+      - name: Run type checking
+        run: pnpm --filter api check-types
+
+      - name: Run unit tests
+        run: pnpm --filter api test
+
+      - name: Run E2E tests
+        run: pnpm --filter api test:e2e
