@@ -47,8 +47,6 @@ services:
     environment:
       # Defaults to the bundled postgres; override DATABASE_URL in .env for Neon/managed PG
       DATABASE_URL: ${DATABASE_URL:-postgresql://socialplanner:socialplanner@postgres:5432/socialplanner}
-      SCRAPECREATORS_API_KEY: ${SCRAPECREATORS_API_KEY:-}
-      APIFY_API_KEY: ${APIFY_API_KEY:-}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}

@@ -60,7 +60,6 @@ The API is organized into feature modules: `authors`, `content`, `sync`,
 - **pnpm** 9 (`corepack enable` then `corepack prepare pnpm@9 --activate`)
 - A **Postgres** database — any Postgres works (local, Docker, or a managed host like [Neon](https://neon.tech))
 - A **Redis** instance (for the BullMQ sync queue)
-- A **ScrapeCreators** API key — https://scrapecreators.com (used to fetch post data)
 
 ---
 
@@ -78,8 +77,6 @@ pnpm install
 
 ```sh
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
-SCRAPECREATORS_API_KEY=your_key_here
-APIFY_API_KEY=your_key_here
 REDIS_HOST=localhost
 REDIS_PORT=6379
 ```
@@ -114,7 +111,7 @@ The repo ships a `docker-compose.yml` that runs the web app, API, a Postgres
 database, and Redis — no external services required.
 
 ```sh
-cp .env.docker.example .env          # add your SCRAPECREATORS_API_KEY
+cp .env.docker.example .env
 docker compose up --build            # web :3000 · api :4000 · postgres :5432 · redis :6379
 ```
 
