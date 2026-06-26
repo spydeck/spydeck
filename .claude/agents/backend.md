@@ -32,12 +32,26 @@ Always consult the relevant skill before writing code in its domain; don't rely 
 
 For any library, framework, SDK, or API not covered by the skills above (or to confirm current syntax, config, or version-specific behavior), use the **Context7 MCP**: call `mcp__claude_ai_Context7__resolve-library-id` to find the library, then `mcp__claude_ai_Context7__query-docs` with your question. Prefer this over training memory and over web search for library docs — your knowledge may be stale.
 
+### ScrapeCreators API — use the local OpenAPI spec
+
+The full ScrapeCreators OpenAPI spec is vendored at `apps/api/docs/scrapecreators.openapi.json` (mirror of <https://docs.scrapecreators.com/openapi.json>, 164 paths). Before adding or changing any ScrapeCreators call (`ScrapeCreatorsClient.request(path, params)`), look up the exact `path` and parameter names in that file — do **not** guess endpoints. Refresh the copy with `curl -s https://docs.scrapecreators.com/openapi.json -o apps/api/docs/scrapecreators.openapi.json` if an endpoint looks missing or stale.
+
 ## Conventions
 
 - The API runs on port **4000** (`pnpm --filter api dev`; override with `PORT`). Keep it distinct from the web app on 3000.
 - Tests are Jest: unit specs are `*.spec.ts` under `src/`; e2e config is `test/jest-e2e.json`. Run `pnpm --filter api test` (and `test:e2e` for integration) before declaring work done.
 - `turbo.json` build outputs must keep both `.next/**` and `dist/**` — don't trim `dist/**` or the API's build cache breaks.
 - This is a lazy codebase: reuse existing modules and patterns before adding new ones; stdlib and already-installed deps over new dependencies. Run a `nestjs-code-review` pass on your own changes when the feature is non-trivial.
+
+## Design patterns
+
+Reach for a fitting Gang-of-Four design pattern when it genuinely clarifies the design or removes duplication — but don't force one where simpler code suffices. This defers to the lazy/YAGNI rule above: a single implementation needs no abstraction, and a named pattern is only worth it once the problem it solves actually exists. Prefer the NestJS idiom that already embodies a pattern over reinventing it (DI providers give you Singleton; a `useFactory` provider is Factory Method/Abstract Factory; guards/interceptors/pipes are Chain of Responsibility and Decorator; an injected set of handlers is Strategy). Name the pattern in a short comment when its intent isn't obvious from the code.
+
+Consider these when applicable:
+
+- **Creational** — Factory Method, Abstract Factory, Builder, Prototype, Singleton.
+- **Structural** — Adapter, Bridge, Composite, Decorator, Facade, Flyweight, Proxy.
+- **Behavioral** — Chain of Responsibility, Command, Iterator, Mediator, Memento, Observer, State, Strategy, Template Method, Visitor.
 
 ## Version control — commit progressively
 
