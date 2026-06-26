@@ -7,13 +7,25 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { DataTable } from "@/components/ui/data-table"
 import { AdThumbnail } from "../../_components/ad-thumbnail"
 import { SaveAdButton } from "../../_components/save-ad-button"
-import { dateSortValue, formatDateLabel } from "../../_components/date-utils"
+import { differenceInCalendarDays, isValid, parseISO } from "date-fns"
 import { normalizeLinkedInAd, type LinkedInAd } from "./linkedin-ad"
 
-function linkedInDateLabel(ad: LinkedInAd): string | null {
-  if (ad.adDuration) return ad.adDuration
-  if (ad.startDate) return `${ad.startDate} – ${ad.endDate ?? "–"}`
-  return null
+// Inclusive run length in days when both start/end dates are set, else 0.
+function durationDays(ad: LinkedInAd): number {
+  if (ad.startDate && ad.endDate) {
+    const start = parseISO(ad.startDate)
+    const end = parseISO(ad.endDate)
+    if (isValid(start) && isValid(end)) {
+      return differenceInCalendarDays(end, start) + 1
+    }
+  }
+  return 0
+}
+
+function formatDuration(ad: LinkedInAd): string {
+  const days = durationDays(ad)
+  if (days > 0) return `${days} ${days === 1 ? "day" : "days"}`
+  return ad.adDuration ?? "–"
 }
 
 function impressionsSortKey(value: LinkedInAd["totalImpressions"]): {
@@ -133,13 +145,13 @@ export function LinkedInAdsTable({
       },
       {
         id: "duration",
-        accessorFn: (ad) => dateSortValue(linkedInDateLabel(ad)),
+        accessorFn: (ad) => durationDays(ad),
         size: 180,
         minSize: 140,
         header: "Duration",
         cell: ({ row }) => (
           <span className="whitespace-nowrap text-muted-foreground">
-            {formatDateLabel(linkedInDateLabel(row.original))}
+            {formatDuration(row.original)}
           </span>
         ),
       },
