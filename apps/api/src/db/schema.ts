@@ -95,6 +95,70 @@ export const swipeAdsCategories = pgTable('swipe_ads_categories', {
     .notNull(),
 });
 
+// An advertiser (e.g. "Lusha") the user tracks. Its presence on each ad
+// platform lives in advertiser_channels.
+export const advertisers = pgTable('advertisers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  logo: text('logo'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const advertiserPlatformEnum = pgEnum('advertiser_platform', [
+  'linkedin',
+  'meta',
+  'google',
+  'tiktok',
+]);
+
+// One per (advertiser, platform): the advertiser's account on that ad library.
+export const advertiserChannels = pgTable(
+  'advertiser_channels',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    advertiserId: uuid('advertiser_id')
+      .notNull()
+      .references(() => advertisers.id, { onDelete: 'cascade' }),
+    platform: advertiserPlatformEnum('platform').notNull(),
+    // LinkedIn companyId, Meta pageId, Google advertiser_id, TikTok brand/keyword.
+    externalId: text('external_id').notNull(),
+    name: text('name').notNull(),
+    url: text('url'),
+    logo: text('logo'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique('advertiser_channels_advertiser_platform_unique').on(
+      table.advertiserId,
+      table.platform,
+    ),
+  ],
+);
+
+export const advertisersRelations = relations(advertisers, ({ many }) => ({
+  channels: many(advertiserChannels),
+}));
+
+export const advertiserChannelsRelations = relations(
+  advertiserChannels,
+  ({ one }) => ({
+    advertiser: one(advertisers, {
+      fields: [advertiserChannels.advertiserId],
+      references: [advertisers.id],
+    }),
+  }),
+);
+
 // Saved ("swiped") ads, persisted server-side. `ad` holds the full NormalizedAd
 // view model; one row per external ad id.
 export const swipeAds = pgTable('swipe_ads', {
@@ -390,6 +454,10 @@ export type SwipeAdsCategory = typeof swipeAdsCategories.$inferSelect;
 export type NewSwipeAdsCategory = typeof swipeAdsCategories.$inferInsert;
 export type SwipeAd = typeof swipeAds.$inferSelect;
 export type NewSwipeAd = typeof swipeAds.$inferInsert;
+export type Advertiser = typeof advertisers.$inferSelect;
+export type NewAdvertiser = typeof advertisers.$inferInsert;
+export type AdvertiserChannel = typeof advertiserChannels.$inferSelect;
+export type NewAdvertiserChannel = typeof advertiserChannels.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type AuthorProfile = typeof authorsProfiles.$inferSelect;
 export type NewAuthorProfile = typeof authorsProfiles.$inferInsert;

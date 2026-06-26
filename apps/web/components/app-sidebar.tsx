@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import {
+  Building2Icon,
   BookmarkIcon,
   LayoutDashboardIcon,
   MegaphoneIcon,
@@ -45,6 +46,7 @@ const navGroups = [
     items: [
       { title: "Search Ads", url: "/search-ads", icon: <MegaphoneIcon /> },
       { title: "Swipe Ads", url: "/swipe-ads", icon: <SaveIcon /> },
+      { title: "Advertisers", url: "/advertisers", icon: <Building2Icon /> },
     ],
   },
 ];

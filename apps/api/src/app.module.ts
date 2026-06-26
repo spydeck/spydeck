@@ -15,6 +15,7 @@ import { ApifyModule } from './apify/apify.module';
 import { SyncModule } from './sync/sync.module';
 import { AdsModule } from './ads/ads.module';
 import { SwipeAdsModule } from './swipe-ads/swipe-ads.module';
+import { AdvertisersModule } from './advertisers/advertisers.module';
 
 const CACHE_TTL_MS = 3_600_000; // 1 hour
 
@@ -58,6 +59,7 @@ const CACHE_TTL_MS = 3_600_000; // 1 hour
     SyncModule,
     AdsModule,
     SwipeAdsModule,
+    AdvertisersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
