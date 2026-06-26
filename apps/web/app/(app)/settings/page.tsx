@@ -30,6 +30,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SiteHeader } from "@/components/site-header"
 import { ChangePasswordCard } from "./_components/change-password-card"
+import { ProfileCard } from "./_components/profile-card"
 
 const schema = z.object({
   scrapeCreatorsKey: z.string().trim(),
@@ -110,11 +111,16 @@ export default function SettingsPage() {
       <SiteHeader title="Settings" />
       <div className="flex flex-1 flex-col items-center py-10 px-4">
         <div className="w-full max-w-2xl flex flex-col gap-6">
-          <Tabs defaultValue="api-keys">
+          <Tabs defaultValue="profile">
             <TabsList>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="api-keys">API Keys</TabsTrigger>
               <TabsTrigger value="password">Password</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="profile" className="mt-4">
+              <ProfileCard />
+            </TabsContent>
 
             <TabsContent value="api-keys" className="flex flex-col gap-6 mt-4">
               <p className="text-muted-foreground text-sm">

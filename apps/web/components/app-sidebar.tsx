@@ -26,6 +26,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMe } from "@/lib/auth";
 
 const navGroups = [
   {
@@ -50,14 +51,14 @@ const navGroups = [
   },
 ];
 
-const user = {
-  name: "shadcn",
-  email: "m@example.com",
-  avatar: "/avatars/shadcn.jpg",
-};
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { data: me } = useMe();
+  const user = {
+    name: me?.name || me?.username || "...",
+    email: me?.email || me?.username || "...",
+    avatar: "/avatars/shadcn.jpg",
+  };
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>

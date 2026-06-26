@@ -12,6 +12,7 @@ import { DB } from '../db/database.module';
 import type { DrizzleDB } from '../db/database.module';
 import { users } from '../db/schema';
 import type { User } from '../db/schema';
+import { UpdateProfileDto } from './auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -54,6 +55,32 @@ export class AuthService {
       .set({ passwordHash, updatedAt: new Date() })
       .where(eq(users.id, userId));
     this.logger.log(`password changed for user ${userId}`);
+    return { ok: true };
+  }
+
+  async getUserById(userId: string) {
+    const user = await this.db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const { passwordHash, ...safeUser } = user;
+    return safeUser;
+  }
+
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<{ ok: true }> {
+    await this.db
+      .update(users)
+      .set({
+        ...dto,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+    this.logger.log(`profile updated for user ${userId}`);
     return { ok: true };
   }
 }
