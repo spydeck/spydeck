@@ -64,6 +64,20 @@
       "when": 1782498248447,
       "tag": "0008_shocking_doctor_octopus",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1782502517807,
+      "tag": "0009_abandoned_sleepwalker",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1782504111960,
+      "tag": "0010_chubby_zeigeist",
+      "breakpoints": true
     }
   ]
 }

@@ -258,6 +258,40 @@ export const adDetails = pgTable(
   ],
 );
 
+// Meta (Facebook) pages seen in company searches. Persisted so ad results can
+// show the real company logo instead of an initial placeholder.
+export const metaCompanies = pgTable('meta_companies', {
+  pageId: text('page_id').primaryKey(),
+  name: text('name').notNull(),
+  category: text('category'),
+  logo: text('logo'),
+  likes: integer('likes'),
+  igUsername: text('ig_username'),
+  igFollowers: integer('ig_followers'),
+  verified: boolean('verified').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// Durable cache of LinkedIn company searches (Apify is metered, so we persist
+// results by query to keep API calls to a minimum across restarts/evictions).
+export const linkedinCompanySearches = pgTable('linkedin_company_searches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  // Normalized (trimmed + lowercased) search term; upsert key.
+  query: text('query').notNull().unique(),
+  results: jsonb('results').$type<unknown>().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export const authorsRelations = relations(authors, ({ many }) => ({
   profiles: many(authorsProfiles),
   syncConfigs: many(authorSyncConfigs),
@@ -308,3 +342,8 @@ export type AuthorSyncConfig = typeof authorSyncConfigs.$inferSelect;
 export type NewAuthorSyncConfig = typeof authorSyncConfigs.$inferInsert;
 export type AdDetail = typeof adDetails.$inferSelect;
 export type NewAdDetail = typeof adDetails.$inferInsert;
+export type LinkedinCompanySearch = typeof linkedinCompanySearches.$inferSelect;
+export type NewLinkedinCompanySearch =
+  typeof linkedinCompanySearches.$inferInsert;
+export type MetaCompany = typeof metaCompanies.$inferSelect;
+export type NewMetaCompany = typeof metaCompanies.$inferInsert;

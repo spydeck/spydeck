@@ -7,6 +7,8 @@ import {
   MetaAdsDto,
   TikTokAdsDto,
   LinkedInAdsDto,
+  LinkedInCompaniesDto,
+  MetaCompaniesDto,
 } from './ads.dto';
 
 @Controller('ads')
@@ -29,6 +31,11 @@ export class AdsController {
     return this.adsService.metaAds(q);
   }
 
+  @Get('meta/companies')
+  metaCompanies(@Query() q: MetaCompaniesDto) {
+    return this.adsService.metaCompanies(q);
+  }
+
   @Get('tiktok')
   tiktokAds(@Query() q: TikTokAdsDto) {
     return this.adsService.tiktokAds(q);
@@ -37,5 +44,10 @@ export class AdsController {
   @Get('linkedin')
   linkedinAds(@Query() q: LinkedInAdsDto) {
     return this.adsService.linkedinAds(q);
+  }
+
+  @Get('linkedin/companies')
+  linkedinCompanies(@Query() q: LinkedInCompaniesDto) {
+    return this.adsService.linkedinCompanies(q);
   }
 }

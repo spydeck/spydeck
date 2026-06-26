@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DateRangeSelect } from "@/components/date-range-select"
 import { CountrySelect } from "@/components/country-select"
+import { CompanySearch } from "./company-search"
 
 export interface FormState {
   company: string
@@ -48,19 +49,14 @@ export function LinkedInForm({
             aria-label="Keyword"
           />
         </div>
-        <Input
-          value={form.company}
-          onChange={(e) => onChange("company", e.target.value)}
-          placeholder="Company name"
-          className="w-full sm:w-44"
-          aria-label="Company name"
-        />
-        <Input
-          value={form.companyId}
-          onChange={(e) => onChange("companyId", e.target.value)}
-          placeholder="Company ID"
-          className="w-full sm:w-36"
-          aria-label="Company ID"
+        <CompanySearch
+          company={form.company}
+          companyId={form.companyId}
+          onChange={(next) => {
+            onChange("company", next.company)
+            onChange("companyId", next.companyId)
+          }}
+          className="w-full sm:w-72"
         />
       </div>
 

@@ -47,4 +47,34 @@ export class ApifyClient {
       throw err;
     }
   }
+
+  // Runs an actor synchronously and returns its dataset items.
+  // actorId uses the `username~actor-name` form, e.g. `harvestapi~linkedin-company-search`.
+  async runActor<T>(actorId: string, input: unknown): Promise<T[]> {
+    const apiKey = await this.getApiKey();
+    const url = `${BASE_URL}/v2/acts/${actorId}/run-sync-get-dataset-items`;
+    this.logger.log(`RUN ${actorId}`);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => res.statusText);
+        this.logger.warn(
+          `Apify run ${actorId} responded ${res.status}: ${body}`,
+        );
+        throw new HttpException(`Apify: ${body}`, res.status);
+      }
+      return res.json() as Promise<T[]>;
+    } catch (err) {
+      if (err instanceof HttpException) throw err;
+      this.logger.error(`Apify run failed: ${actorId}`, (err as Error).stack);
+      throw err;
+    }
+  }
 }

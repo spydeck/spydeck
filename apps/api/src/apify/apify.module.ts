@@ -8,5 +8,6 @@ import { ApifyController } from './apify.controller';
   imports: [SettingsModule],
   controllers: [ApifyController],
   providers: [ApifyClient, ApifyService],
+  exports: [ApifyClient],
 })
 export class ApifyModule {}

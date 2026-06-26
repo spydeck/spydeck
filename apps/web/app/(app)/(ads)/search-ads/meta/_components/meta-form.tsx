@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { CountrySelect } from "@/components/country-select"
 import { DateRangeSelect } from "@/components/date-range-select"
+import { MetaCompanySearch } from "./company-search"
 
 export interface FormState {
   query: string
@@ -57,6 +58,11 @@ export function MetaForm({
             aria-label="Search query"
           />
         </div>
+        <MetaCompanySearch
+          value={form.query}
+          onChange={(name) => onChange("query", name)}
+          className="w-full sm:w-56"
+        />
         <CountrySelect
           value={form.country}
           onChange={(v) => onChange("country", v)}

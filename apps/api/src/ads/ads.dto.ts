@@ -43,3 +43,11 @@ export class LinkedInAdsDto {
   @IsOptional() @IsString() endDate?: string;
   @IsOptional() @IsString() paginationToken?: string;
 }
+
+export class LinkedInCompaniesDto {
+  @IsString() @IsNotEmpty() query!: string;
+}
+
+export class MetaCompaniesDto {
+  @IsString() @IsNotEmpty() query!: string;
+}
