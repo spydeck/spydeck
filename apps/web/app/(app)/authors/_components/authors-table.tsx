@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { type ColumnDef } from "@tanstack/react-table"
 import { BadgeCheck, Pencil, RefreshCw, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -98,8 +99,10 @@ function getAuthorColumns({
     {
       accessorKey: "name",
       header: "Name",
-      cell: ({ getValue }) => (
-        <span className="font-medium">{getValue<string>()}</span>
+      cell: ({ row }) => (
+        <Link href={`/authors/${row.original.id}`} className="font-medium hover:underline underline-offset-2">
+          {row.original.name}
+        </Link>
       ),
     },
     ...PLATFORMS.map(
