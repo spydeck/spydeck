@@ -1,5 +1,7 @@
 # Spydeck
 
+[![Backend Tests](https://github.com/spydeck/spydeck/actions/workflows/test-backend.yml/badge.svg)](https://github.com/spydeck/spydeck/actions/workflows/test-backend.yml)
+
 A powerful self-hosted swipe file and ad database for creators, marketers, and researchers. Point it at any creator's handle across TikTok, Instagram, YouTube, or X to automatically sync their recent posts, analyze their top performers, and build a structured visual repository of what works.
 
 ---
