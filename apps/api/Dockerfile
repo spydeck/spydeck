@@ -19,5 +19,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 # sharp/heic-convert need no extra apt packages — their prebuilt binaries are bundled
 COPY --from=build /prod/api ./
+# Migrations + entrypoint aren't part of the compiled output — copy them explicitly.
+COPY --from=build /app/apps/api/drizzle ./drizzle
+COPY --from=build /app/apps/api/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 EXPOSE 4000
-CMD ["node", "dist/main"]
+# Generates JWT_SECRET (if unset), runs migrations, seeds the admin, then starts.
+CMD ["./docker-entrypoint.sh"]

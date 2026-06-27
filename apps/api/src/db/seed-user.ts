@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as bcrypt from 'bcrypt';
@@ -19,15 +18,14 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(password, 10);
 
+  // Seed the initial admin only. Don't clobber a password the user later changed
+  // in-app (or via the planned first-run wizard) on every container restart.
   await db
     .insert(users)
     .values({ username, passwordHash })
-    .onConflictDoUpdate({
-      target: users.username,
-      set: { passwordHash, updatedAt: new Date() },
-    });
+    .onConflictDoNothing({ target: users.username });
 
-  console.log(`User "${username}" created/updated.`);
+  console.log(`Admin user "${username}" ensured.`);
   await pool.end();
 }
 

@@ -7,8 +7,9 @@
 # needed. To use Neon (or any managed Postgres) instead, set DATABASE_URL in .env;
 # the standard pg driver connects to either.
 #
-# Run migrations once the db is up (drizzle-kit is a dev dependency, run from host):
-#   DATABASE_URL=postgresql://socialplanner:socialplanner@localhost:5432/socialplanner pnpm --filter api db:migrate
+# The api container migrates the DB and seeds the admin user on startup, so the
+# only thing you must set is ADMIN_USERNAME / ADMIN_PASSWORD (JWT_SECRET is
+# auto-generated on first boot and persisted to the api-data volume).
 
 services:
   postgres:
@@ -49,8 +50,15 @@ services:
       DATABASE_URL: ${DATABASE_URL:-postgresql://socialplanner:socialplanner@postgres:5432/socialplanner}
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      # Leave empty to auto-generate a UUID on first boot (persisted to api-data).
+      JWT_SECRET: ${JWT_SECRET:-}
+      # The only credentials you need to set.
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
       WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
       PORT: "4000"
+    volumes:
+      - api-data:/app/data
     ports:
       - "4000:4000"
     depends_on:
@@ -79,3 +87,4 @@ services:
 volumes:
   postgres-data:
   redis-data:
+  api-data:
