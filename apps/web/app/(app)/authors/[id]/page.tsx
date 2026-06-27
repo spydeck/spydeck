@@ -49,7 +49,7 @@ export default function AuthorProfilePage() {
   if (authorsLoading) {
     return (
       <>
-        <SiteHeader title="Author" />
+        <SiteHeader breadcrumbs={[{ label: "Authors", href: "/authors" }, { label: "…" }]} />
         <div className="flex flex-col gap-6 px-4 py-6">
           <Skeleton className="h-40 w-full rounded-xl" />
           <div className="pt-8 flex items-center gap-3">
@@ -66,7 +66,7 @@ export default function AuthorProfilePage() {
   if (!author) {
     return (
       <>
-        <SiteHeader title="Author not found" />
+        <SiteHeader breadcrumbs={[{ label: "Authors", href: "/authors" }, { label: "Not found" }]} />
         <div className="px-4 py-10 text-sm text-muted-foreground">
           Author not found.{" "}
           <Link href="/authors" className="underline underline-offset-2">
@@ -79,7 +79,7 @@ export default function AuthorProfilePage() {
 
   return (
     <>
-      <SiteHeader title={author.name} />
+      <SiteHeader breadcrumbs={[{ label: "Authors", href: "/authors" }, { label: author.name }]} />
       <div className="flex flex-1 flex-col gap-6 px-4 py-6">
         {/* Banner with overlapping avatar */}
         <div className="relative h-40 rounded-xl bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500">
