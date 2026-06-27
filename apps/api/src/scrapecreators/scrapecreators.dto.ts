@@ -4,7 +4,6 @@ import {
   IsBoolean,
   IsEnum,
   IsNumber,
-  IsUrl,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 

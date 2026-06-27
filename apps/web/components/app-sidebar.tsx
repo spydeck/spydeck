@@ -23,7 +23,6 @@ import {
   Settings2Icon,
   UsersRoundIcon,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMe } from "@/lib/auth";
@@ -69,6 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link href="/">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/logo.png?v=1"
                   alt="Spydeck"

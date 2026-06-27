@@ -17,7 +17,7 @@ function makeDb(profileId = 'profile-1') {
   const returning = jest.fn().mockResolvedValue([{ id: profileId }]);
   const onConflictDoUpdate = jest.fn(() => ({ returning }));
   // values() is awaitable (links insert) AND chainable (profile upsert).
-  const values = jest.fn((..._args: unknown[]) => ({
+  const values = jest.fn(() => ({
     onConflictDoUpdate,
     then: (resolve: (v: unknown) => unknown) => resolve(undefined),
   }));

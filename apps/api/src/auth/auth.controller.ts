@@ -55,20 +55,14 @@ export class AuthController {
 
   @Post('update-profile')
   @HttpCode(200)
-  async updateProfile(
-    @Req() req: Request,
-    @Body() dto: UpdateProfileDto,
-  ) {
+  async updateProfile(@Req() req: Request, @Body() dto: UpdateProfileDto) {
     const userId = (req as Request & { user: { id: string } }).user.id;
     return this.authService.updateProfile(userId, dto);
   }
 
   @Post('change-password')
   @HttpCode(200)
-  async changePassword(
-    @Req() req: Request,
-    @Body() dto: ChangePasswordDto,
-  ) {
+  async changePassword(@Req() req: Request, @Body() dto: ChangePasswordDto) {
     const userId = (req as Request & { user: { id: string } }).user.id;
     return this.authService.changePassword(
       userId,

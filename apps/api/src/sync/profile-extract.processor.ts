@@ -170,7 +170,7 @@ export class ProfileExtractProcessor extends WorkerHost {
         return {
           profileData: {
             ...base,
-            platformId: String(u['id'] ?? ''),
+            platformId: String((u['id'] as string | number | undefined) ?? ''),
             displayName: (u['nickname'] as string) ?? null,
             avatarUrl: (u['avatarLarger'] as string) ?? null,
             bio: (u['signature'] as string) ?? null,
