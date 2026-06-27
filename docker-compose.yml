@@ -63,13 +63,16 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-      # Baked into the client bundle at build time — must be the URL the BROWSER
-      # uses to reach the API. Change it and rebuild for a non-localhost deploy.
+      # Baked into the client bundle at build time. By default, uses relative path '/api'
+      # which leverages Next.js Server-Side Rewrites to proxy to INTERNAL_API_URL at runtime,
+      # making the build artifact fully environment-agnostic.
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
     restart: unless-stopped
     ports:
       - "3000:3000"
+    environment:
+      INTERNAL_API_URL: ${INTERNAL_API_URL:-http://api:4000}
     depends_on:
       - api
 
