@@ -3,10 +3,10 @@
 import { useState } from "react"
 import { ExternalLinkIcon, PlayCircleIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { MetaPlatformIcons } from "./meta-platform-icons"
 import { SaveAdButton } from "./save-ad-button"
+import { AdvertiserLogoMenu } from "./advertiser-logo-menu"
 import type { NormalizedAd } from "./normalized-ad"
 
 // Google video ads are YouTube links — render them as an embed, not a <video>.
@@ -24,14 +24,7 @@ export function AdCard({ ad }: { ad: NormalizedAd }) {
     <Card className="mb-4 flex break-inside-avoid flex-col gap-0 overflow-hidden rounded-xl py-0">
       {/* Author header */}
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
-        <Avatar className="size-8 rounded-md">
-          {ad.advertiserLogo && (
-            <AvatarImage src={ad.advertiserLogo} alt={ad.advertiser} />
-          )}
-          <AvatarFallback className="rounded-md bg-muted text-xs font-semibold">
-            {ad.advertiser.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <AdvertiserLogoMenu ad={ad} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold leading-tight text-foreground">
             {ad.advertiser}
